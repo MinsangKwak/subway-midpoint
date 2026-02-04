@@ -1,0 +1,10 @@
+.main{
+  border:1px solid red;
+  background:#F2F4F6;
+  display:grid;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  grid-template-columns:360px 1fr;
+  gap:20px;
+}
