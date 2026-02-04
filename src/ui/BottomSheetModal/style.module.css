@@ -1,0 +1,56 @@
+.dimmed {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 90;
+}
+
+/* Bottom Sheet */
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+  z-index: 100;
+}
+
+/* 열림 */
+.open {
+  transform: translateY(0);
+}
+
+/* 접힘 (헤더만 노출) */
+.closed {
+  transform: translateY(calc(100% - 48px));
+}
+
+.header {
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.toggleButton {
+  background: none;
+  border: none;
+  padding: 8px;
+  font-size: 24px; /* 아이콘 크기 */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content > div{
+  padding: 0 20px 20px 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
