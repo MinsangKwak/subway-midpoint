@@ -6,7 +6,6 @@ import { Button } from '../ui/Button';
 import { Title } from '../ui/Title';
 import { InputList } from '../ui/InputList';
 import { TextField } from '../ui/Input';
-import { Card } from '../ui/Card';
 import { FaUserPlus } from 'react-icons/fa';
 
 import { SubwayStationList } from '../ui/SubwayStationList';
@@ -14,7 +13,7 @@ import { searchSubwayStations } from '../services/subway/subway.service';
 import type { SubwayStation } from '../services/subway/subway.types';
 
 import { KakaoMap } from '../ui/Map/KakaoMap';
-
+import { BottomSheetModal } from '../ui/BottomSheetModal';
 
 type DepartureField = {
   id: string;
@@ -37,6 +36,9 @@ export const HomePage = () => {
 
   const [stationCandidates, setStationCandidates] = useState<SubwayStation[]>([]);
   const [highlightIndex, setHighlightIndex] = useState(0);
+
+  /** BottomSheet 열림/접힘 상태 */
+  const [isModalOpen, setIsModalOpen] = useState(true);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -109,77 +111,85 @@ export const HomePage = () => {
 
   return (
     <Layout>
-      <Card ref={wrapperRef}>
-        <Title icon="😊" title="출발지를 입력하고 중간장소를 찾아보세요!" />
-
-        <InputList>
-          {departureFields.map((field, index) => {
-            const shouldShowCandidates =
-              activeDepartureFieldId === field.id &&
-              stationCandidates.length > 0;
-
-            return (
-              <div key={field.id}>
-                <TextField
-                  placeholder={`${index + 1}. 출발지를 입력해주세요`}
-                  value={field.value}
-                  onChange={(e) =>
-                    handleDepartureChange(field.id, e.target.value)
-                  }
-                  onKeyDown={(e) => {
-                    if (!shouldShowCandidates) return;
-
-                    if (e.key === 'ArrowDown') {
-                      setHighlightIndex((i) =>
-                        Math.min(i + 1, stationCandidates.length - 1)
-                      );
-                    }
-
-                    if (e.key === 'ArrowUp') {
-                      setHighlightIndex((i) => Math.max(i - 1, 0));
-                    }
-
-                    if (e.key === 'Enter') {
-                      selectStation(
-                        field.id,
-                        stationCandidates[highlightIndex]
-                      );
-                    }
-                  }}
-                  showRemoveButton={field.value.length > 0}
-                  onRemove={() => handleRemoveAction(field.id, index)}
-                />
-
-                {shouldShowCandidates && (
-                  <SubwayStationList
-                    stations={stationCandidates}
-                    keyword={field.value}
-                    highlightIndex={highlightIndex}
-                    onSelect={(station) =>
-                      selectStation(field.id, station)
-                    }
-                  />
-                )}
-              </div>
-            );
-          })}
-        </InputList>
-
-        <ButtonContainer>
-          <Button variant="text" size="small" onClick={addDepartureField}>
-            <FaUserPlus /> 출발지 추가하기
-          </Button>
-
-          <Button fullWidth onClick={submitMidpointSearch}>
-            중간장소 찾기
-          </Button>
-
-          <Button variant="ghost" size="small">
-            랜덤으로 중간장소 찾기
-          </Button>
-        </ButtonContainer>
-      </Card>
+      {/* 지도는 항상 바닥 */}
       <KakaoMap />
+
+      {/* BottomSheet Modal */}
+      <BottomSheetModal
+        isOpen={isModalOpen}
+        onToggle={() => setIsModalOpen((v) => !v)}
+      >
+        <div ref={wrapperRef}>
+          <Title title="출발지를 입력하고 중간장소를 찾아보세요!" />
+
+          <InputList>
+            {departureFields.map((field, index) => {
+              const shouldShowCandidates =
+                activeDepartureFieldId === field.id &&
+                stationCandidates.length > 0;
+
+              return (
+                <div key={field.id}>
+                  <TextField
+                    placeholder={`${index + 1}. 출발지를 입력해주세요`}
+                    value={field.value}
+                    onChange={(e) =>
+                      handleDepartureChange(field.id, e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (!shouldShowCandidates) return;
+
+                      if (e.key === 'ArrowDown') {
+                        setHighlightIndex((i) =>
+                          Math.min(i + 1, stationCandidates.length - 1)
+                        );
+                      }
+
+                      if (e.key === 'ArrowUp') {
+                        setHighlightIndex((i) => Math.max(i - 1, 0));
+                      }
+
+                      if (e.key === 'Enter') {
+                        selectStation(
+                          field.id,
+                          stationCandidates[highlightIndex]
+                        );
+                      }
+                    }}
+                    showRemoveButton={field.value.length > 0}
+                    onRemove={() => handleRemoveAction(field.id, index)}
+                  />
+
+                  {shouldShowCandidates && (
+                    <SubwayStationList
+                      stations={stationCandidates}
+                      keyword={field.value}
+                      highlightIndex={highlightIndex}
+                      onSelect={(station) =>
+                        selectStation(field.id, station)
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </InputList>
+
+          <ButtonContainer>
+            <Button variant="text" size="small" onClick={addDepartureField}>
+              <FaUserPlus /> 출발지 추가하기
+            </Button>
+
+            <Button fullWidth onClick={submitMidpointSearch}>
+              중간장소 찾기
+            </Button>
+
+            <Button variant="ghost" size="small">
+              랜덤으로 중간장소 찾기
+            </Button>
+          </ButtonContainer>
+        </div>
+      </BottomSheetModal>
     </Layout>
   );
 };
