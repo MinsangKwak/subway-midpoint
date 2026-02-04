@@ -1,0 +1,37 @@
+/* base */
+.button {
+  border: none;
+  border-radius: 12px;
+  padding: 0 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+/* size */
+.large {
+  height: 52px;
+  font-size: 16px;
+}
+
+.small {
+  height: 40px;
+  font-size: 14px;
+}
+
+/* width */
+.fullWidth {
+  width: 100%;
+}
+
+/* states */
+.button:not(.disabled) {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.disabled {
+  background-color: #e5e8eb;
+  color: #9aa0a6;
+  cursor: not-allowed;
+}
