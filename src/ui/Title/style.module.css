@@ -1,20 +1,28 @@
-.wrapper {
+.title-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.center {
+/* alignment */
+.align-center {
   text-align: center;
+  align-items: center;
 }
 
-.left {
+.align-left {
   text-align: left;
+  align-items: flex-start;
 }
 
-.icon {
+/* icon */
+.title-icon {
   font-size: 28px;
+  line-height: 1;
 }
 
-.title {
-  margin-top: 8px;
+/* text */
+.title-text {
   font-weight: 600;
   font-size: 16px;
   line-height: 1.4;
