@@ -49,7 +49,7 @@ export const HomePage = () => {
     }
 
     const confirmed = window.confirm(
-      `${index + 1}. 이렇게 생성된 요소부터 값을 삭제하시겠습니까?`
+      `${index + 1}. 값을 삭제하시겠습니까?`
     );
 
     if (!confirmed) return;
