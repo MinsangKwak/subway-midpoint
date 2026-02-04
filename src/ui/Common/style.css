@@ -98,13 +98,16 @@ video {
 
 /* Body base */
 body {
-  line-height: 1.5;
+  line-height: 1.37;
   font-family: system-ui, -apple-system, BlinkMacSystemFont,
     'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR',
     'Malgun Gothic', Arial, sans-serif;
   color: #111827;
   background-color: #ffffff;
   -webkit-font-smoothing: antialiased;
+}
+html,body{
+  height:100%;
 }
 
 /* Lists */
@@ -170,4 +173,8 @@ em {
 /* Hidden */
 [hidden] {
   display: none !important;
+}
+
+#root{
+  height:100%;
 }
