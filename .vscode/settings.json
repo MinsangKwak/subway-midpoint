@@ -10,5 +10,8 @@
   },
 
   "eslint.validate": ["javascript", "typescript", "typescriptreact"],
-  "prettier.requireConfig": true
+  "prettier.requireConfig": true,
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

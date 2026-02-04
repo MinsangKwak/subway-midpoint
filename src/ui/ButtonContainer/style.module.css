@@ -1,0 +1,18 @@
+.container {
+  display: flex;
+  gap: 12px;
+  text-align:center;
+}
+
+/* direction */
+.column {
+  flex-direction: column;
+}
+
+.row {
+  flex-direction: row;
+}
+.container > button{
+  flex-grow:1;
+  width:100%;
+}
