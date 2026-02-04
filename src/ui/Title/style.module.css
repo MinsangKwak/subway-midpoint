@@ -1,0 +1,21 @@
+.wrapper {
+}
+
+.center {
+  text-align: center;
+}
+
+.left {
+  text-align: left;
+}
+
+.icon {
+  font-size: 28px;
+}
+
+.title {
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.4;
+}
