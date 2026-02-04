@@ -1,0 +1,66 @@
+/* 리스트 컨테이너 */
+.list {
+  margin-top: 6px;
+  padding: 4px 0;
+  list-style: none;
+
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* 역 아이템 (li 자체) */
+.list li {
+  padding: 10px 14px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* hover */
+.list li:hover {
+  background: #f3f4f6;
+}
+
+/* 키보드 / 선택 강조 */
+.active {
+  background: #e5f0ff;
+}
+
+/* 노선 뱃지 공통 */
+.line {
+  min-width: 44px;
+  padding: 2px 6px;
+
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+
+  border-radius: 6px;
+  color: #ffffff;
+}
+
+/* 노선별 컬러 */
+.line2 {
+  background: #00a84d; /* 2호선 */
+}
+
+/* 역 이름 (highlight 포함) */
+.list li span:last-child {
+  font-weight: 500;
+  color: #111827;
+}
+
+/* 검색어 강조 */
+.list strong {
+  color: #2563eb;
+  font-weight: 700;
+}
