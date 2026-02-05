@@ -49,8 +49,14 @@
 }
 
 /* 노선별 컬러 */
+.line1 {
+  background: #0052A4;
+}
 .line2 {
-  background: #00a84d; /* 2호선 */
+  background: #00a84d;
+}
+.line4 {
+  background: #00A5DE;
 }
 
 /* 역 이름 (highlight 포함) */

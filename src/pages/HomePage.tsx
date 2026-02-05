@@ -12,81 +12,131 @@ import { SubwayStationList } from '../ui/SubwayStationList';
 import { searchSubwayStations } from '../services/subway/subway.service';
 import type { SubwayStation } from '../services/subway/subway.types';
 
-import { KakaoMap } from '../ui/Map/KakaoMap';
+import { KakaoMap } from '../ui/Map';
 import { BottomSheetModal } from '../ui/BottomSheetModal';
 
+/**
+ * 출발지 입력 필드 타입
+ */
 type DepartureField = {
-  id: string;
-  value: string;
+  id: string;     // 필드 고유 ID
+  value: string;  // 입력된 출발지 값
 };
 
+/**
+ * 출발지 입력 필드 생성 함수
+ */
 const createDepartureField = (): DepartureField => ({
   id: crypto.randomUUID(),
   value: '',
 });
 
 export const HomePage = () => {
+  /** 출발지 입력 필드 목록 */
   const [departureFields, setDepartureFields] = useState<DepartureField[]>([
     createDepartureField(),
   ]);
 
+  /** 현재 활성화된 출발지 필드 ID */
   const [activeDepartureFieldId, setActiveDepartureFieldId] = useState(
     departureFields[0].id
   );
 
+  /** 지하철역 검색 후보 목록 */
   const [stationCandidates, setStationCandidates] = useState<SubwayStation[]>([]);
+
+  /** 자동완성 하이라이트 인덱스 */
   const [highlightIndex, setHighlightIndex] = useState(0);
 
   /** BottomSheet 열림/접힘 상태 */
   const [isModalOpen, setIsModalOpen] = useState(true);
 
+  /** 지도 중심 좌표 */
+  const [mapCenter, setMapCenter] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  /** 자동완성 영역 ref (외부 클릭 감지용) */
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  /** 외부 클릭 시 후보 닫기 */
+  /**
+   * 자동완성 외부 클릭 시 후보 목록 닫기
+   */
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!wrapperRef.current?.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
         setStationCandidates([]);
       }
     };
+
     window.addEventListener('click', handleClickOutside);
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
-  /** 출발지 추가 */
+  /**
+   * 출발지 입력 필드 추가
+   */
   const addDepartureField = () => {
     const newField = createDepartureField();
+
     setDepartureFields((fields) => [...fields, newField]);
     setActiveDepartureFieldId(newField.id);
     setStationCandidates([]);
     setHighlightIndex(0);
   };
 
+  /**
+   * 출발지 입력 값 업데이트
+   */
   const updateDepartureValue = (id: string, value: string) => {
     setDepartureFields((fields) =>
-      fields.map((f) => (f.id === id ? { ...f, value } : f))
+      fields.map((field) =>
+        field.id === id ? { ...field, value } : field
+      )
     );
   };
 
+  /**
+   * 출발지 입력 변경 처리
+   */
   const handleDepartureChange = (id: string, value: string) => {
     setActiveDepartureFieldId(id);
     updateDepartureValue(id, value);
 
-    const keyword = value.trim();
-    if (!keyword) {
+    const trimmedKeyword = value.trim();
+    if (!trimmedKeyword) {
       setStationCandidates([]);
       return;
     }
 
-    setStationCandidates(searchSubwayStations(keyword));
+    setStationCandidates(searchSubwayStations(trimmedKeyword));
     setHighlightIndex(0);
   };
 
+  /**
+   * 지하철역 선택 처리
+   */
   const selectStation = (id: string, station: SubwayStation) => {
+    console.log('[HomePage] 검색어 선택', {
+      name: station.name,
+      latitude: station.latitude,
+      longitude: station.longitude,
+    });
+
     updateDepartureValue(id, station.name);
     setStationCandidates([]);
+
+    // 지도 중심 좌표 설정
+    setMapCenter({
+      latitude: station.latitude,
+      longitude: station.longitude,
+    });
   };
 
+  /**
+   * 출발지 입력 필드 삭제
+   */
   const handleRemoveAction = (id: string, index: number) => {
     if (departureFields.length === 1) {
       updateDepartureValue(id, '');
@@ -95,29 +145,37 @@ export const HomePage = () => {
     }
 
     const confirmed = window.confirm(
-      `${index + 1}. 이렇게 생성된 요소부터 값을 삭제하시겠습니까?`
+      `${index + 1}. 이 입력 필드부터 삭제하시겠습니까?`
     );
 
     if (!confirmed) return;
 
-    setDepartureFields((fields) => fields.filter((f) => f.id !== id));
-    if (activeDepartureFieldId === id) setStationCandidates([]);
+    setDepartureFields((fields) => fields.filter((field) => field.id !== id));
+    if (activeDepartureFieldId === id) {
+      setStationCandidates([]);
+    }
   };
 
+  /**
+   * 중간 장소 검색 (임시)
+   */
   const submitMidpointSearch = () => {
-    const list = departureFields.map((f) => f.value).filter(Boolean);
-    alert(`출발지 목록: ${list.join(', ')}`);
+    const departureList = departureFields
+      .map((field) => field.value)
+      .filter(Boolean);
+
+    alert(`출발지 목록: ${departureList.join(', ')}`);
   };
 
   return (
     <Layout>
-      {/* 지도는 항상 바닥 */}
-      <KakaoMap />
+      {/* 지도 영역 */}
+      <KakaoMap center={mapCenter ?? undefined} />
 
-      {/* BottomSheet Modal */}
+      {/* BottomSheet 영역 */}
       <BottomSheetModal
         isOpen={isModalOpen}
-        onToggle={() => setIsModalOpen((v) => !v)}
+        onToggle={() => setIsModalOpen((value) => !value)}
       >
         <div ref={wrapperRef}>
           <Title title="출발지를 입력하고 중간장소를 찾아보세요!" />
@@ -133,23 +191,29 @@ export const HomePage = () => {
                   <TextField
                     placeholder={`${index + 1}. 출발지를 입력해주세요`}
                     value={field.value}
-                    onChange={(e) =>
-                      handleDepartureChange(field.id, e.target.value)
+                    onChange={(event) =>
+                      handleDepartureChange(field.id, event.target.value)
                     }
-                    onKeyDown={(e) => {
+                    onKeyDown={(event) => {
                       if (!shouldShowCandidates) return;
 
-                      if (e.key === 'ArrowDown') {
-                        setHighlightIndex((i) =>
-                          Math.min(i + 1, stationCandidates.length - 1)
+                      if (event.key === 'ArrowDown') {
+                        setHighlightIndex((currentIndex) =>
+                          Math.min(
+                            currentIndex + 1,
+                            stationCandidates.length - 1
+                          )
                         );
                       }
 
-                      if (e.key === 'ArrowUp') {
-                        setHighlightIndex((i) => Math.max(i - 1, 0));
+                      if (event.key === 'ArrowUp') {
+                        setHighlightIndex((currentIndex) =>
+                          Math.max(currentIndex - 1, 0)
+                        );
                       }
 
-                      if (e.key === 'Enter') {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
                         selectStation(
                           field.id,
                           stationCandidates[highlightIndex]
