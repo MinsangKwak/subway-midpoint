@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './style.module.css';
 
 declare global {
@@ -66,6 +66,8 @@ export const KakaoMap = ({
   const polylineList = useRef<any[]>([]);
   const midpointMarker = useRef<any>(null);
 
+  const [mapReady, setMapReady] = useState(false);
+
   // 지도 초기화
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
@@ -76,14 +78,18 @@ export const KakaoMap = ({
           center: new window.kakao.maps.LatLng(37.4979, 127.0276),
           level: 5,
         });
+
+        setMapReady(true);
       });
     });
   }, []);
 
-  // 출발지 마커 동기화
+  // 출발지 마커 동기화 + (출발지 상태에서만) bounds
   useEffect(() => {
+    if (!mapReady) return;
     if (!mapInstance.current) return;
 
+    // 기존 마커 중 삭제된 것 정리
     markerMap.current.forEach((marker, id) => {
       if (!stations.find((s) => s.id === id)) {
         marker.setMap(null);
@@ -92,6 +98,9 @@ export const KakaoMap = ({
     });
 
     if (stations.length === 0) return;
+
+    // polylines가 그려진 상태면 bounds를 polylines effect에서 잡을 거라 여기서 안 건드린다
+    if (polylines.length > 0) return;
 
     const bounds = new window.kakao.maps.LatLngBounds();
 
@@ -115,46 +124,67 @@ export const KakaoMap = ({
     });
 
     mapInstance.current.setBounds(bounds);
-  }, [stations]);
+  }, [stations, polylines.length, mapReady]);
 
-  // Polyline 렌더링
+  // Polyline 렌더링 + polyline 기준 bounds
   useEffect(() => {
+    if (!mapReady) return;
     if (!mapInstance.current) return;
 
+    // 기존 polyline 제거
     polylineList.current.forEach((line) => line.setMap(null));
     polylineList.current = [];
+
+    if (polylines.length === 0) return;
+
+    const bounds = new window.kakao.maps.LatLngBounds();
 
     polylines.forEach(({ path, color }) => {
       if (path.length < 2) return;
 
-      const latLngPath = path.map(
-        (p) => new window.kakao.maps.LatLng(p.latitude, p.longitude)
-      );
+      const kakaoPath = path.map((p) => {
+        const latlng = new window.kakao.maps.LatLng(p.latitude, p.longitude);
+        bounds.extend(latlng);
+        return latlng;
+      });
 
+      // 아웃라인
       const outline = new window.kakao.maps.Polyline({
         map: mapInstance.current,
-        path: latLngPath,
-        strokeWeight: 10,
+        path: kakaoPath,
+        strokeWeight: 12,
         strokeColor: '#000000',
-        strokeOpacity: 0.35,
+        strokeOpacity: 0.45,
         strokeStyle: 'solid',
       });
 
+      // 실제 라인
       const line = new window.kakao.maps.Polyline({
         map: mapInstance.current,
-        path: latLngPath,
-        strokeWeight: 6,
+        path: kakaoPath,
+        strokeWeight: 8,
         strokeColor: color,
         strokeOpacity: 1,
         strokeStyle: 'solid',
       });
 
-      polylineList.current.push(outline, line);
+      polylineList.current.push(outline);
+      polylineList.current.push(line);
     });
-  }, [polylines]);
+
+    // midpoint도 bounds에 포함 (있으면)
+    if (midpoint) {
+      bounds.extend(
+        new window.kakao.maps.LatLng(midpoint.latitude, midpoint.longitude)
+      );
+    }
+
+    mapInstance.current.setBounds(bounds);
+  }, [polylines, midpoint, mapReady]);
 
   // 중간지점 마커
   useEffect(() => {
+    if (!mapReady) return;
     if (!mapInstance.current) return;
 
     if (midpointMarker.current) {
@@ -175,18 +205,20 @@ export const KakaoMap = ({
         new window.kakao.maps.Size(24, 35)
       ),
     });
-  }, [midpoint]);
+  }, [midpoint, mapReady]);
 
-  // 단일 center 이동
+  // 단일 center 이동 (출발지만 있을 때만)
   useEffect(() => {
+    if (!mapReady) return;
     if (!center) return;
     if (!mapInstance.current) return;
     if (stations.length > 1) return;
+    if (polylines.length > 0) return;
 
     mapInstance.current.setCenter(
       new window.kakao.maps.LatLng(center.latitude, center.longitude)
     );
-  }, [center, stations.length]);
+  }, [center, stations.length, polylines.length, mapReady]);
 
   return (
     <div className={styles.wrapper}>
