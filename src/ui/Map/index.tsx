@@ -11,20 +11,27 @@ const KAKAO_SDK_URL =
   '//dapi.kakao.com/v2/maps/sdk.js?appkey=978abb23ebefd464ebc147fb4197eed5&autoload=false';
 
 type KakaoMapProps = {
-  /** 단일 포커스 이동용 (fallback) */
   center?: {
     latitude: number;
     longitude: number;
   };
 
-  /** 선택된 모든 역 (마커 + bounds 제어용) */
   stations?: {
     id: string;
     latitude: number;
     longitude: number;
   }[];
 
-  /** 지도 위 오버레이 UI */
+  polylines?: {
+    path: { latitude: number; longitude: number }[];
+    color: string;
+  }[];
+
+  midpoint?: {
+    latitude: number;
+    longitude: number;
+  } | null;
+
   children?: React.ReactNode;
 };
 
@@ -48,40 +55,42 @@ const loadKakaoScript = (): Promise<void> => {
 export const KakaoMap = ({
   center,
   stations = [],
+  polylines = [],
+  midpoint,
   children,
 }: KakaoMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
 
-  /** station.id 기준 마커 관리 */
   const markerMap = useRef<Map<string, any>>(new Map());
+  const polylineList = useRef<any[]>([]);
+  const midpointMarker = useRef<any>(null);
 
-  /* ============================
-   * 1️⃣ 지도 초기화
-   * ============================ */
+  // 지도 초기화
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
     loadKakaoScript().then(() => {
       window.kakao.maps.load(() => {
-        const defaultCenter = new window.kakao.maps.LatLng(
-          37.4979,
-          127.0276
-        );
-
         mapInstance.current = new window.kakao.maps.Map(mapRef.current, {
-          center: defaultCenter,
+          center: new window.kakao.maps.LatLng(37.4979, 127.0276),
           level: 5,
         });
       });
     });
   }, []);
 
-  /* ============================
-   * 2️⃣ 선택된 역 마커 + zoom out
-   * ============================ */
+  // 출발지 마커 동기화
   useEffect(() => {
     if (!mapInstance.current) return;
+
+    markerMap.current.forEach((marker, id) => {
+      if (!stations.find((s) => s.id === id)) {
+        marker.setMap(null);
+        markerMap.current.delete(id);
+      }
+    });
+
     if (stations.length === 0) return;
 
     const bounds = new window.kakao.maps.LatLngBounds();
@@ -94,39 +103,89 @@ export const KakaoMap = ({
 
       bounds.extend(position);
 
-      // 마커 없으면 생성
       if (!markerMap.current.has(station.id)) {
         const marker = new window.kakao.maps.Marker({
           map: mapInstance.current,
           position,
         });
-
         markerMap.current.set(station.id, marker);
       } else {
-        markerMap.current
-          .get(station.id)
-          ?.setPosition(position);
+        markerMap.current.get(station.id)?.setPosition(position);
       }
     });
 
-    // ⭐ 모든 마커가 보이도록 자동 zoom
     mapInstance.current.setBounds(bounds);
   }, [stations]);
 
-  /* ============================
-   * 3️⃣ 단일 center 이동 (fallback)
-   * ============================ */
+  // Polyline 렌더링
+  useEffect(() => {
+    if (!mapInstance.current) return;
+
+    polylineList.current.forEach((line) => line.setMap(null));
+    polylineList.current = [];
+
+    polylines.forEach(({ path, color }) => {
+      if (path.length < 2) return;
+
+      const latLngPath = path.map(
+        (p) => new window.kakao.maps.LatLng(p.latitude, p.longitude)
+      );
+
+      const outline = new window.kakao.maps.Polyline({
+        map: mapInstance.current,
+        path: latLngPath,
+        strokeWeight: 10,
+        strokeColor: '#000000',
+        strokeOpacity: 0.35,
+        strokeStyle: 'solid',
+      });
+
+      const line = new window.kakao.maps.Polyline({
+        map: mapInstance.current,
+        path: latLngPath,
+        strokeWeight: 6,
+        strokeColor: color,
+        strokeOpacity: 1,
+        strokeStyle: 'solid',
+      });
+
+      polylineList.current.push(outline, line);
+    });
+  }, [polylines]);
+
+  // 중간지점 마커
+  useEffect(() => {
+    if (!mapInstance.current) return;
+
+    if (midpointMarker.current) {
+      midpointMarker.current.setMap(null);
+      midpointMarker.current = null;
+    }
+
+    if (!midpoint) return;
+
+    midpointMarker.current = new window.kakao.maps.Marker({
+      map: mapInstance.current,
+      position: new window.kakao.maps.LatLng(
+        midpoint.latitude,
+        midpoint.longitude
+      ),
+      image: new window.kakao.maps.MarkerImage(
+        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+        new window.kakao.maps.Size(24, 35)
+      ),
+    });
+  }, [midpoint]);
+
+  // 단일 center 이동
   useEffect(() => {
     if (!center) return;
     if (!mapInstance.current) return;
-    if (stations.length > 1) return; // 여러 역일 땐 bounds가 우선
+    if (stations.length > 1) return;
 
-    const position = new window.kakao.maps.LatLng(
-      center.latitude,
-      center.longitude
+    mapInstance.current.setCenter(
+      new window.kakao.maps.LatLng(center.latitude, center.longitude)
     );
-
-    mapInstance.current.setCenter(position);
   }, [center, stations.length]);
 
   return (
