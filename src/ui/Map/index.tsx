@@ -138,37 +138,47 @@ export const KakaoMap = ({
     if (polylines.length === 0) return;
 
     const bounds = new window.kakao.maps.LatLngBounds();
+    let hasPathPoint = false;
 
     polylines.forEach(({ path, color }) => {
       if (path.length < 2) return;
 
-      const kakaoPath = path.map((p) => {
-        const latlng = new window.kakao.maps.LatLng(p.latitude, p.longitude);
-        bounds.extend(latlng);
-        return latlng;
-      });
+      const kakaoPath = path
+        .filter(
+          (p) =>
+            Number.isFinite(p.latitude) &&
+            Number.isFinite(p.longitude)
+        )
+        .map((p) => {
+          const latlng = new window.kakao.maps.LatLng(p.latitude, p.longitude);
+          bounds.extend(latlng);
+          hasPathPoint = true;
+          return latlng;
+        });
+
+      if (kakaoPath.length < 2) return;
 
       // 아웃라인
       const outline = new window.kakao.maps.Polyline({
-        map: mapInstance.current,
         path: kakaoPath,
         strokeWeight: 20,
         strokeColor: '#FF00FF',
         strokeOpacity: 1,
         strokeStyle: 'solid',
-        zIndex: 10,
       });
+      outline.setMap(mapInstance.current);
+      outline.setZIndex(10);
 
       // 실제 라인
       const line = new window.kakao.maps.Polyline({
-        map: mapInstance.current,
         path: kakaoPath,
         strokeWeight: 10,
         strokeColor: color,
         strokeOpacity: 1,
         strokeStyle: 'solid',
-        zIndex: 11,
       });
+      line.setMap(mapInstance.current);
+      line.setZIndex(11);
 
       polylineList.current.push(outline);
       polylineList.current.push(line);
@@ -176,12 +186,17 @@ export const KakaoMap = ({
 
     // midpoint도 bounds에 포함 (있으면)
     if (midpoint) {
-      bounds.extend(
-        new window.kakao.maps.LatLng(midpoint.latitude, midpoint.longitude)
+      const midpointLatLng = new window.kakao.maps.LatLng(
+        midpoint.latitude,
+        midpoint.longitude
       );
+      bounds.extend(midpointLatLng);
+      hasPathPoint = true;
     }
 
-    mapInstance.current.setBounds(bounds);
+    if (hasPathPoint) {
+      mapInstance.current.setBounds(bounds);
+    }
   }, [polylines, midpoint, mapReady]);
 
   // 중간지점 마커
