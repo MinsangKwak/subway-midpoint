@@ -152,20 +152,22 @@ export const KakaoMap = ({
       const outline = new window.kakao.maps.Polyline({
         map: mapInstance.current,
         path: kakaoPath,
-        strokeWeight: 12,
-        strokeColor: '#000000',
-        strokeOpacity: 0.45,
+        strokeWeight: 20,
+        strokeColor: '#FF00FF',
+        strokeOpacity: 1,
         strokeStyle: 'solid',
+        zIndex: 10,
       });
 
       // 실제 라인
       const line = new window.kakao.maps.Polyline({
         map: mapInstance.current,
         path: kakaoPath,
-        strokeWeight: 8,
+        strokeWeight: 10,
         strokeColor: color,
         strokeOpacity: 1,
         strokeStyle: 'solid',
+        zIndex: 11,
       });
 
       polylineList.current.push(outline);

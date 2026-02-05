@@ -45,8 +45,21 @@ export const subwayLines: SubwayLine[] = [
 // 3. 환승 연결은 이름(name) 기준으로 자동 생성된다
 export const subwayStations: RawSubwayStation[] = [
   // =========================
-  // 1호선 (서울 핵심 구간)
+  // 1호선 (서울 + 핵심 연장)
   // =========================
+  { id: 'incheon', name: '인천', lineId: '1', latitude: 37.4767, longitude: 126.6163 },
+  { id: 'dongincheon', name: '동인천', lineId: '1', latitude: 37.4746, longitude: 126.6326 },
+  { id: 'jemulpo', name: '제물포', lineId: '1', latitude: 37.4668, longitude: 126.6566 },
+  { id: 'dohwa', name: '도화', lineId: '1', latitude: 37.4661, longitude: 126.6684 },
+  { id: 'juan', name: '주안', lineId: '1', latitude: 37.4643, longitude: 126.6796 },
+  { id: 'guro', name: '구로', lineId: '1', latitude: 37.5030, longitude: 126.8827 },
+  { id: 'sindorim_1', name: '신도림', lineId: '1', latitude: 37.5090, longitude: 126.8912 },
+  { id: 'yeongdeungpo', name: '영등포', lineId: '1', latitude: 37.5156, longitude: 126.9076 },
+  { id: 'singil', name: '신길', lineId: '1', latitude: 37.5171, longitude: 126.9178 },
+  { id: 'daebang', name: '대방', lineId: '1', latitude: 37.5134, longitude: 126.9263 },
+  { id: 'noryangjin', name: '노량진', lineId: '1', latitude: 37.5133, longitude: 126.9410 },
+  { id: 'yongsan', name: '용산', lineId: '1', latitude: 37.5299, longitude: 126.9648 },
+
   { id: 'seoul_1', name: '서울역', lineId: '1', latitude: 37.5563, longitude: 126.9723 },
   { id: 'cityhall_1', name: '시청', lineId: '1', latitude: 37.5657, longitude: 126.9769 },
   { id: 'jonggak', name: '종각', lineId: '1', latitude: 37.5704, longitude: 126.9826 },
@@ -55,6 +68,43 @@ export const subwayStations: RawSubwayStation[] = [
   { id: 'dongdaemun_1', name: '동대문', lineId: '1', latitude: 37.5714, longitude: 127.0090 },
   { id: 'sinseol_1', name: '신설동', lineId: '1', latitude: 37.5760, longitude: 127.0257 },
 
+  { id: 'jegidong', name: '제기동', lineId: '1', latitude: 37.5781, longitude: 127.0347 },
+  { id: 'cheongnyangni', name: '청량리', lineId: '1', latitude: 37.5800, longitude: 127.0463 },
+  { id: 'hoegi', name: '회기', lineId: '1', latitude: 37.5898, longitude: 127.0571 },
+  { id: 'hankukdae', name: '한국외대앞', lineId: '1', latitude: 37.5961, longitude: 127.0634 },
+  { id: 'seokgye', name: '석계', lineId: '1', latitude: 37.6148, longitude: 127.0657 },
+  { id: 'gwangunUniv', name: '광운대', lineId: '1', latitude: 37.6236, longitude: 127.0610 },
+  { id: 'changdong', name: '창동', lineId: '1', latitude: 37.6530, longitude: 127.0470 },
+  { id: 'dobong', name: '도봉', lineId: '1', latitude: 37.6795, longitude: 127.0452 },
+  { id: 'uigov', name: '의정부', lineId: '1', latitude: 37.7381, longitude: 127.0456 },
+
+  // =========================
+  // 1호선 (금정 · 수원 · 천안 방면)
+  // =========================
+  { id: 'gasan', name: '가산디지털단지', lineId: '1', latitude: 37.4816, longitude: 126.8825 },
+  { id: 'geumcheon', name: '금천구청', lineId: '1', latitude: 37.4556, longitude: 126.8946 },
+  { id: 'anyan', name: '안양', lineId: '1', latitude: 37.4019, longitude: 126.9227 },
+  { id: 'myeonghak', name: '명학', lineId: '1', latitude: 37.3844, longitude: 126.9354 },
+
+  { id: 'geumjeong', name: '금정', lineId: '1', latitude: 37.3722, longitude: 126.9434 },
+
+  { id: 'gunpo', name: '군포', lineId: '1', latitude: 37.3537, longitude: 126.9485 },
+  { id: 'dangjeong', name: '당정', lineId: '1', latitude: 37.3444, longitude: 126.9488 },
+  { id: 'uigang', name: '의왕', lineId: '1', latitude: 37.3204, longitude: 126.9480 },
+  { id: 'seonggyun', name: '성균관대', lineId: '1', latitude: 37.3003, longitude: 126.9716 },
+
+  { id: 'suwon', name: '수원', lineId: '1', latitude: 37.2665, longitude: 126.9995 },
+
+  { id: 'seohyeon', name: '세류', lineId: '1', latitude: 37.2453, longitude: 127.0131 },
+  { id: 'byeongjeom', name: '병점', lineId: '1', latitude: 37.2066, longitude: 127.0327 },
+  { id: 'seodongtan', name: '서동탄', lineId: '1', latitude: 37.1951, longitude: 127.0513 },
+
+  { id: 'osan', name: '오산', lineId: '1', latitude: 37.1459, longitude: 127.0667 },
+  { id: 'songtan', name: '송탄', lineId: '1', latitude: 37.0753, longitude: 127.0555 },
+  { id: 'pyeongtaek', name: '평택', lineId: '1', latitude: 36.9903, longitude: 127.0851 },
+
+  { id: 'seojeongni', name: '서정리', lineId: '1', latitude: 36.9956, longitude: 127.1032 },
+  { id: 'cheonan', name: '천안', lineId: '1', latitude: 36.8100, longitude: 127.1464 },
   // =========================
   // 2호선 (순환선)
   //
