@@ -24,16 +24,16 @@ export const SelectedStationBadgeList = ({
   if (stations.length === 0) return null;
 
   return (
-    <div className={styles.container}>
+    <div className={styles.wrapper}>
       {stations.map((station) => (
         <button
           key={station.id}
           type="button"
-          className={`${styles.badge} ${styles[`line${station.lineId}`]}`}
+          className={`${styles.container} ${styles[`line${station.lineId}`]}`}
           onClick={() => onSelect?.(station.id)}
         >
-          <span className={styles.line}>
-            {station.lineId}호선
+          <span className={styles.badge}>
+            {station.lineId}
           </span>
 
           <span className={styles.name}>
