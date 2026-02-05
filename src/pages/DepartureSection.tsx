@@ -12,8 +12,8 @@ import { searchSubwayStations } from '../services/subway/subway.service';
 import type { SubwayStation } from '../services/subway/subway.types';
 
 type DepartureField = {
-  id: string;    // 입력 필드 ID
-  value: string; // 입력 값
+  id: string;
+  value: string;
 };
 
 const createDepartureField = (): DepartureField => ({
@@ -22,13 +22,19 @@ const createDepartureField = (): DepartureField => ({
 });
 
 type Props = {
-  selectedStations: { fieldId: string; id: string }[];
+  selectedStations: {
+    fieldId: string;
+    id: string;
+    color: string;
+  }[];
   onStationSelect: (fieldId: string, station: SubwayStation) => void;
+  onStationRemove: (fieldId: string) => void;
 };
 
 export const DepartureInputSection = ({
   selectedStations,
   onStationSelect,
+  onStationRemove,
 }: Props) => {
   const [departureFields, setDepartureFields] = useState<DepartureField[]>([
     createDepartureField(),
@@ -43,13 +49,11 @@ export const DepartureInputSection = ({
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // 이미 선택된 역 ID 목록
   const selectedStationIds = useMemo(
     () => selectedStations.map((s) => s.id),
     [selectedStations]
   );
 
-  // 외부 클릭 시 자동완성 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!wrapperRef.current?.contains(e.target as Node)) {
@@ -107,6 +111,10 @@ export const DepartureInputSection = ({
           const showCandidates =
             activeFieldId === field.id && stationCandidates.length > 0;
 
+          const matched = selectedStations.find(
+            (s) => s.fieldId === field.id
+          );
+
           return (
             <div key={field.id}>
               <TextField
@@ -138,7 +146,13 @@ export const DepartureInputSection = ({
                   }
                 }}
                 showRemoveButton={field.value.length > 0}
-                onRemove={() => updateValue(field.id, '')}
+                onRemove={() => {
+                  updateValue(field.id, '');
+                  onStationRemove(field.id);
+                }}
+                style={{
+                  borderColor: matched?.color ?? '#E5E7EB',
+                }}
               />
 
               {showCandidates && (
