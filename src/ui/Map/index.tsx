@@ -161,24 +161,24 @@ export const KakaoMap = ({
       // 아웃라인
       const outline = new window.kakao.maps.Polyline({
         path: kakaoPath,
-        strokeWeight: 20,
-        strokeColor: '#FF00FF',
+        strokeWeight: 22,
+        strokeColor: '#ff4fd8',
         strokeOpacity: 1,
         strokeStyle: 'solid',
+        zIndex: 10,
       });
       outline.setMap(mapInstance.current);
-      outline.setZIndex(10);
 
       // 실제 라인
       const line = new window.kakao.maps.Polyline({
         path: kakaoPath,
-        strokeWeight: 10,
+        strokeWeight: 12,
         strokeColor: color,
         strokeOpacity: 1,
         strokeStyle: 'solid',
+        zIndex: 11,
       });
       line.setMap(mapInstance.current);
-      line.setZIndex(11);
 
       polylineList.current.push(outline);
       polylineList.current.push(line);
