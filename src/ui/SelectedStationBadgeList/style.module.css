@@ -1,0 +1,33 @@
+.container {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.line {
+  opacity: 0.9;
+}
+
+.name {
+  font-weight: 700;
+}
+
+/* 노선별 스타일 */
+.line1 { background-color: #0052A4; }
+.line2 { background-color: #00A84D; }
+.line4 { background-color: #00A5DE; }

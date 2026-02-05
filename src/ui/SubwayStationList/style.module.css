@@ -70,3 +70,16 @@
   color: #2563eb;
   font-weight: 700;
 }
+
+/* 이미 선택된 역 */
+.selected {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 선택됨 라벨 */
+.selectedLabel {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #999;
+}
