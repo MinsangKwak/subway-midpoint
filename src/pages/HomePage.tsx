@@ -136,12 +136,33 @@ export const HomePage = () => {
     const nextPolylines = selectedStations
       .map((s) => {
         const pathIds = result.paths[s.id] ?? [];
-        const latlngs = pathToLatLngs(graph, pathIds);
+        const pathPoints = pathToLatLngs(graph, pathIds);
 
-        console.log('[Polyline]', s.name, latlngs);
+        // 경로가 계산되더라도 마지막 점이 midpoint와 다를 수 있어
+        // 지도에서 "연결된 선"이 끊겨 보이지 않도록 midpoint를 강제로 종점으로 붙인다.
+        const connectedPath = [...pathPoints];
+        const lastPoint = connectedPath[connectedPath.length - 1];
+
+        if (
+          !lastPoint ||
+          lastPoint.latitude !== nextMidpoint.latitude ||
+          lastPoint.longitude !== nextMidpoint.longitude
+        ) {
+          connectedPath.push(nextMidpoint);
+        }
+
+        // 예외 상황(그래프 경로 누락 등)에서도 최소한 출발지↔중간지점 직선은 보이게 한다.
+        if (connectedPath.length < 2) {
+          connectedPath.unshift({
+            latitude: s.latitude,
+            longitude: s.longitude,
+          });
+        }
+
+        console.log('[Polyline]', s.name, connectedPath);
 
         return {
-          path: latlngs,
+          path: connectedPath,
           color: s.color,
         };
       })
