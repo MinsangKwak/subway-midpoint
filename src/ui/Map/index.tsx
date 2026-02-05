@@ -7,151 +7,132 @@ declare global {
   }
 }
 
-const KAKAO_SDK_URL = '//dapi.kakao.com/v2/maps/sdk.js?appkey=978abb23ebefd464ebc147fb4197eed5&autoload=false';
+const KAKAO_SDK_URL =
+  '//dapi.kakao.com/v2/maps/sdk.js?appkey=978abb23ebefd464ebc147fb4197eed5&autoload=false';
 
-/**
- * KakaoMap 컴포넌트 Props
- */
 type KakaoMapProps = {
+  /** 단일 포커스 이동용 (fallback) */
   center?: {
-    latitude: number;   // 지도 중심 위도
-    longitude: number;  // 지도 중심 경도
+    latitude: number;
+    longitude: number;
   };
+
+  /** 선택된 모든 역 (마커 + bounds 제어용) */
+  stations?: {
+    id: string;
+    latitude: number;
+    longitude: number;
+  }[];
+
+  /** 지도 위 오버레이 UI */
+  children?: React.ReactNode;
 };
 
-/**
- * Kakao Maps SDK 로드 함수
- * - SDK가 이미 로드된 경우 재사용
- */
 const loadKakaoScript = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (window.kakao && window.kakao.maps) {
-      console.log('[KakaoMap] SDK already loaded');
       resolve();
       return;
     }
 
-    console.log('[KakaoMap] Loading SDK...');
     const script = document.createElement('script');
     script.src = KAKAO_SDK_URL;
     script.async = true;
-    script.onload = () => {
-      console.log('[KakaoMap] SDK load success');
-      resolve();
-    };
-    script.onerror = () => {
-      console.error('[KakaoMap] SDK load failed');
-      reject();
-    };
+    script.onload = () => resolve();
+    script.onerror = () => reject();
 
     document.head.appendChild(script);
   });
 };
 
-export const KakaoMap = ({ center }: KakaoMapProps) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+export const KakaoMap = ({
+  center,
+  stations = [],
+  children,
+}: KakaoMapProps) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<any>(null);
 
-  /** Kakao 지도 인스턴스 */
-  const mapInstanceRef = useRef<any>(null);
+  /** station.id 기준 마커 관리 */
+  const markerMap = useRef<Map<string, any>>(new Map());
 
-  /** 지도에 표시되는 마커 목록 */
-  const markerInstancesRef = useRef<any[]>([]);
-
-  /**
-   * 지도 최초 생성
-   */
+  /* ============================
+   * 1️⃣ 지도 초기화
+   * ============================ */
   useEffect(() => {
-    if (!mapContainerRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current || mapInstance.current) return;
 
-    loadKakaoScript()
-      .then(() => {
-        window.kakao.maps.load(() => {
-          if (!mapContainerRef.current) return;
+    loadKakaoScript().then(() => {
+      window.kakao.maps.load(() => {
+        const defaultCenter = new window.kakao.maps.LatLng(
+          37.4979,
+          127.0276
+        );
 
-          const defaultLatitude = 37.4979;
-          const defaultLongitude = 127.0276;
-
-          console.log('[KakaoMap] 초기 위치 (기본값)', {
-            latitude: defaultLatitude,
-            longitude: defaultLongitude,
-          });
-
-          const defaultCenter = new window.kakao.maps.LatLng(
-            defaultLatitude,
-            defaultLongitude
-          );
-
-          mapInstanceRef.current = new window.kakao.maps.Map(
-            mapContainerRef.current,
-            {
-              center: defaultCenter,
-              level: 5,
-            }
-          );
-
-          markerInstancesRef.current = [
-            new window.kakao.maps.Marker({
-              map: mapInstanceRef.current,
-              position: defaultCenter,
-            }),
-          ];
-
-          console.log('[KakaoMap] 지도 생성 완료', {
-            mapReady: true,
-          });
-        });
-      })
-      .catch(() => {
-        console.error('[KakaoMap] 지도 생성 실패', {
-          mapReady: false,
+        mapInstance.current = new window.kakao.maps.Map(mapRef.current, {
+          center: defaultCenter,
+          level: 5,
         });
       });
+    });
   }, []);
 
-  /**
-   * 외부에서 전달된 center 좌표 반영
-   */
+  /* ============================
+   * 2️⃣ 선택된 역 마커 + zoom out
+   * ============================ */
   useEffect(() => {
-    if (!center) {
-      console.log('[KakaoMap] center 없음 (이동 안 함)');
-      return;
-    }
+    if (!mapInstance.current) return;
+    if (stations.length === 0) return;
 
-    if (!mapInstanceRef.current) {
-      console.log('[KakaoMap] mapInstance 없음 (이동 불가)');
-      return;
-    }
+    const bounds = new window.kakao.maps.LatLngBounds();
 
-    if (
-      typeof center.latitude !== 'number' ||
-      typeof center.longitude !== 'number'
-    ) {
-      console.warn('[KakaoMap] 유효하지 않은 좌표', center);
-      return;
-    }
+    stations.forEach((station) => {
+      const position = new window.kakao.maps.LatLng(
+        station.latitude,
+        station.longitude
+      );
 
-    console.log('[KakaoMap] 검색어 위치 좌표 수신', {
-      latitude: center.latitude,
-      longitude: center.longitude,
+      bounds.extend(position);
+
+      // 마커 없으면 생성
+      if (!markerMap.current.has(station.id)) {
+        const marker = new window.kakao.maps.Marker({
+          map: mapInstance.current,
+          position,
+        });
+
+        markerMap.current.set(station.id, marker);
+      } else {
+        markerMap.current
+          .get(station.id)
+          ?.setPosition(position);
+      }
     });
 
-    const nextCenter = new window.kakao.maps.LatLng(
+    // ⭐ 모든 마커가 보이도록 자동 zoom
+    mapInstance.current.setBounds(bounds);
+  }, [stations]);
+
+  /* ============================
+   * 3️⃣ 단일 center 이동 (fallback)
+   * ============================ */
+  useEffect(() => {
+    if (!center) return;
+    if (!mapInstance.current) return;
+    if (stations.length > 1) return; // 여러 역일 땐 bounds가 우선
+
+    const position = new window.kakao.maps.LatLng(
       center.latitude,
       center.longitude
     );
 
-    // 다음 프레임에서 레이아웃 안정 후 이동
-    requestAnimationFrame(() => {
-      mapInstanceRef.current.relayout();
-      mapInstanceRef.current.setCenter(nextCenter);
-      markerInstancesRef.current[0]?.setPosition(nextCenter);
+    mapInstance.current.setCenter(position);
+  }, [center, stations.length]);
 
-      console.log('[KakaoMap] 지도 표시 위치', {
-        latitude: center.latitude,
-        longitude: center.longitude,
-      });
-    });
-  }, [center]);
-
-  return <div ref={mapContainerRef} className={styles.container} />;
+  return (
+    <div className={styles.wrapper}>
+      <div ref={mapRef} className={styles.map} />
+      {children}
+    </div>
+  );
 };
