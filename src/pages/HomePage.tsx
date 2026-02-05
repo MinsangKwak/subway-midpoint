@@ -167,6 +167,18 @@ export const HomePage = () => {
     alert(`출발지 목록: ${departureList.join(', ')}`);
   };
 
+  useEffect(() => {
+    const hasSeenNotice = sessionStorage.getItem('subway-midpoint-notice');
+
+    if (!hasSeenNotice) {
+      alert(
+        '본 서비스는 테스트용으로 운영 중입니다.\n\n' +
+        '현재 지하철역 검색은 임시로 등록된 주요 역만 가능합니다.'
+      );
+      sessionStorage.setItem('subway-midpoint-notice', 'true');
+    }
+  }, []);
+
   return (
     <Layout>
       {/* 지도 영역 */}
