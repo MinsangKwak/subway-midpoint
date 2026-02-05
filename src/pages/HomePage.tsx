@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Layout } from '../ui/Layout';
 import { KakaoMap } from '../ui/Map';
@@ -8,11 +8,8 @@ import { SelectedStationBadgeList } from '../ui/SelectedStationBadgeList';
 
 import type { SubwayStation } from '../services/subway/subway.types';
 
-
-
 import { subwayStations } from '../services/subway/subway.mock';
 import { buildSubwayGraph } from '../services/subway/subway.graph';
-import { dijkstra } from '../services/subway/subway.dijkstra';
 import { calculateMidpoint } from '../services/subway/subway.midpoint';
 
 type SelectedStation = {
@@ -23,17 +20,6 @@ type SelectedStation = {
   latitude: number;
   longitude: number;
   color: string;
-};
-
-// 최소 1개 출발지 보장용 기본값
-const DEFAULT_STATION: SelectedStation = {
-  fieldId: 'default',
-  id: 'gangnam',
-  name: '강남',
-  lineId: '2',
-  latitude: 37.4979,
-  longitude: 127.0276,
-  color: '#7C3AED',
 };
 
 const COLOR_POOL = [
@@ -55,16 +41,25 @@ export const HomePage = () => {
     longitude: number;
   } | null>(null);
 
-  // 출발지 + 마커 + 색상 단일 상태
-  const [selectedStations, setSelectedStations] =
-    useState<SelectedStation[]>([DEFAULT_STATION]);
+  const [selectedStations, setSelectedStations] = useState<SelectedStation[]>([]);
 
-  // 출발지 선택 (fieldId 기준 교체)
-  const handleStationSelect = (
-    fieldId: string,
-    station: SubwayStation
-  ) => {
+  const [polylines, setPolylines] = useState<
+    { path: { latitude: number; longitude: number }[]; color: string }[]
+  >([]);
+
+  const [midpoint, setMidpoint] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  // 출발지 선택
+  const handleStationSelect = (fieldId: string, station: SubwayStation) => {
     setSelectedStations((prev) => {
+      const duplicated = prev.find(
+        (s) => s.id === station.id && s.fieldId !== fieldId
+      );
+      if (duplicated) return prev;
+
       const existing = prev.find((s) => s.fieldId === fieldId);
       const color = existing?.color ?? getRandomColor();
 
@@ -83,58 +78,70 @@ export const HomePage = () => {
         },
       ];
     });
-
-    setMapCenter({
-      latitude: station.latitude,
-      longitude: station.longitude,
-    });
   };
 
-  // 출발지 삭제 (최소 1개 보장)
+  // 출발지 삭제
   const handleStationRemoveByField = (fieldId: string) => {
-    setSelectedStations((prev) => {
-      if (prev.length <= 1) return prev;
-      return prev.filter((s) => s.fieldId !== fieldId);
-    });
+    setSelectedStations((prev) =>
+      prev.filter((s) => s.fieldId !== fieldId)
+    );
   };
 
+  // 중간장소 찾기 버튼
+  const handleCalculateMidpoint = () => {
+    if (selectedStations.length < 2) return;
 
-  useEffect(() => {
-    // 1. 그래프 생성
     const graph = buildSubwayGraph(subwayStations);
-
-    console.group('SUBWAY GRAPH DEBUG');
-
-    // 2. 노드 / 간선 수 확인
-    console.log('노드 수:', Object.keys(graph.nodes).length);
-    console.log(
-      '간선 수:',
-      Object.values(graph.adj).reduce(
-        (acc, edges) => acc + edges.length,
-        0
-      )
-    );
-
-    // 3. 특정 역의 인접 리스트 확인
-    console.log('강남 인접 역:', graph.adj['gangnam']);
-
-    // 4. 다익스트라 테스트 (강남 기준)
-    const { dist, prev } = dijkstra(graph, 'gangnam');
-    console.log('강남 → 시청 hop:', dist['cityhall_2']);
-    console.log('강남 prev map:', prev);
-
-    // 5. 중간지점 계산 테스트
     const startIds = selectedStations.map((s) => s.id);
-    if (startIds.length >= 2) {
-      const midpointResult = calculateMidpoint(graph, startIds);
-      console.log('출발지들:', startIds);
-      console.log('중간지점:', midpointResult.midpointId);
-      console.log('경로들:', midpointResult.paths);
+
+    const result = calculateMidpoint(graph, startIds);
+
+    const midNode = graph.nodes[result.midpointId];
+    if (!midNode) return;
+
+    setMidpoint({
+      latitude: midNode.latitude,
+      longitude: midNode.longitude,
+    });
+
+    const lines = selectedStations.map((station) => {
+      const pathIds = result.paths[station.id] ?? [];
+      return {
+        color: station.color,
+        path: pathIds.map((id) => {
+          const node = graph.nodes[id];
+          return {
+            latitude: node.latitude,
+            longitude: node.longitude,
+          };
+        }),
+      };
+    });
+
+    setPolylines(lines);
+
+    setIsModalOpen(false);
+  };
+
+  // 현 위치 → 실패 시 강남
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setMapCenter({ latitude: 37.4979, longitude: 127.0276 });
+      return;
     }
 
-    console.groupEnd();
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setMapCenter({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+      },
+      () => {
+        setMapCenter({ latitude: 37.4979, longitude: 127.0276 });
+      }
+    );
   }, []);
-
 
   return (
     <Layout>
@@ -144,8 +151,9 @@ export const HomePage = () => {
           id: s.id,
           latitude: s.latitude,
           longitude: s.longitude,
-          color: s.color,
         }))}
+        polylines={polylines}
+        midpoint={midpoint}
       >
         <SelectedStationBadgeList
           stations={selectedStations}
@@ -178,6 +186,7 @@ export const HomePage = () => {
           }))}
           onStationSelect={handleStationSelect}
           onStationRemove={handleStationRemoveByField}
+          onSubmit={handleCalculateMidpoint}
         />
       </BottomSheetModal>
     </Layout>

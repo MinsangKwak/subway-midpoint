@@ -29,12 +29,14 @@ type Props = {
   }[];
   onStationSelect: (fieldId: string, station: SubwayStation) => void;
   onStationRemove: (fieldId: string) => void;
+  onSubmit: () => void;
 };
 
 export const DepartureInputSection = ({
   selectedStations,
   onStationSelect,
   onStationRemove,
+  onSubmit,
 }: Props) => {
   const [departureFields, setDepartureFields] = useState<DepartureField[]>([
     createDepartureField(),
@@ -101,6 +103,7 @@ export const DepartureInputSection = ({
 
     onStationSelect(fieldId, station);
   };
+
 
   return (
     <div ref={wrapperRef}>
@@ -175,8 +178,17 @@ export const DepartureInputSection = ({
         <Button variant="text" size="small" onClick={addDepartureField}>
           <FaUserPlus /> 출발지 추가하기
         </Button>
-
-        <Button fullWidth>중간장소 찾기</Button>
+        <Button
+          fullWidth
+          disabled={selectedStations.length < 2}
+          onClick={() => {
+            console.log('[DepartureInputSection] 중간장소 찾기 클릭');
+            console.log('[DepartureInputSection] selectedStations', selectedStations);
+            onSubmit();
+          }}
+        >
+          중간장소 찾기
+        </Button>
       </ButtonContainer>
     </div>
   );

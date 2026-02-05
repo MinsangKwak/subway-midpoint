@@ -39,18 +39,19 @@
   background: none;
   border: none;
   padding: 8px;
-  font-size: 24px; /* 아이콘 크기 */
+  font-size: 24px;
+  /* 아이콘 크기 */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.content > div{
+.content>div {
   padding: 0 20px 20px 20px;
   max-height: 70vh;
   overflow-y: auto;
-  display:flex;
-  flex-direction:column;
-  gap:24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
