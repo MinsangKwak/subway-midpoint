@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import styles from './style.module.css';
 
 declare global {
@@ -7,14 +7,14 @@ declare global {
   }
 }
 
-const KAKAO_SDK_URL =
-  '//dapi.kakao.com/v2/maps/sdk.js?appkey=978abb23ebefd464ebc147fb4197eed5&autoload=false';
+type LatLng = {
+  latitude: number;
+  longitude: number;
+};
 
-// KakaoMap 컴포넌트에서 사용하는 props 타입
-// stations  : 출발지 마커 정보 (호선 색 포함)
-// polylines : 출발지 → 중간지점 경로
-// midpoint  : 계산된 중간지점 좌표
-type KakaoMapProps = {
+export type KakaoMapProps = {
+  center?: LatLng;
+
   stations?: {
     id: string;
     latitude: number;
@@ -23,22 +23,21 @@ type KakaoMapProps = {
   }[];
 
   polylines?: {
-    path: { latitude: number; longitude: number }[];
+    path: LatLng[];
     color: string;
   }[];
 
-  midpoint?: {
-    latitude: number;
-    longitude: number;
-  } | null;
+  midpoint?: LatLng | null;
 
   children?: React.ReactNode;
 };
 
-// Kakao Map SDK를 1번만 로드하기 위한 유틸 함수
+const KAKAO_SDK_URL =
+  '//dapi.kakao.com/v2/maps/sdk.js?appkey=978abb23ebefd464ebc147fb4197eed5&autoload=false';
+
 const loadKakaoScript = (): Promise<void> =>
   new Promise((resolve, reject) => {
-    if (window.kakao && window.kakao.maps) {
+    if (document.querySelector('script[src*="dapi.kakao.com"]')) {
       resolve();
       return;
     }
@@ -46,202 +45,178 @@ const loadKakaoScript = (): Promise<void> =>
     const script = document.createElement('script');
     script.src = KAKAO_SDK_URL;
     script.async = true;
+
     script.onload = () => resolve();
-    script.onerror = () => reject();
+    script.onerror = () =>
+      reject(new Error('Failed to load Kakao SDK'));
+
     document.head.appendChild(script);
   });
 
-// 중간지점 전용 마커 이미지 생성 함수
-// react-icons의 FiMapPin과 동일한 형태를 SVG로 직접 정의
-// 색상은 항상 검정으로 고정하여 "결과 지점"의 의미를 명확히 함
-const createMidpointPinImage = () => {
-  const svg = `
-    <svg
-      width="48"
-      height="48"
-      viewBox="0 0 24 24"
-      fill="#999999"
-      stroke="#000000"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 1 1 18 0z" />
-      <circle cx="12" cy="10" r="3" fill="white" />
-    </svg>
-  `;
-
-  return new window.kakao.maps.MarkerImage(
-    `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    new window.kakao.maps.Size(48, 48),
-    {
-      offset: new window.kakao.maps.Point(24, 48),
-    }
-  );
-};
-
-// 출발지 마커용 원형 컬러 마커 생성
-// 호선 색상과 UI 배지 색을 1:1로 맞추기 위함
-const createColoredMarkerImage = (color: string) => {
-  const svg = `
-    <svg width="32" height="32" viewBox="0 0 32 32"
-      xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="10" fill="${color}" />
-      <circle cx="16" cy="16" r="5" fill="#ffffff" />
-    </svg>
-  `;
-
-  return new window.kakao.maps.MarkerImage(
-    `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    new window.kakao.maps.Size(32, 32),
-    {
-      offset: new window.kakao.maps.Point(16, 16),
-    }
-  );
-};
-
 export const KakaoMap = ({
+  center,
   stations = [],
   polylines = [],
-  midpoint,
+  midpoint = null,
   children,
 }: KakaoMapProps) => {
-  // 실제 지도가 마운트될 DOM ref
   const mapRef = useRef<HTMLDivElement>(null);
 
-  // Kakao Map 인스턴스 (한 번 생성 후 유지)
-  const mapInstance = useRef<any>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const polylinesRef = useRef<any[]>([]);
+  const midpointMarkerRef = useRef<any>(null);
 
-  // 출발지 마커를 id 기준으로 관리하기 위한 Map
-  const markerMap = useRef<Map<string, any>>(new Map());
+  const isInitializedRef = useRef(false);
 
-  // 현재 그려진 polyline들을 추적 (재렌더링 전 제거용)
-  const polylineList = useRef<any[]>([]);
-
-  // 중간지점 마커 (FiMapPin 기반)
-  const midpointMarker = useRef<any>(null);
-
-  // 지도 초기화 완료 여부
-  const [mapReady, setMapReady] = useState(false);
-
-  // 지도 초기화
-  // SDK 로드 → 지도 생성 → mapReady 활성화
+  // =========================
+  // 1️⃣ 지도 초기화 (중요)
+  // =========================
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return;
+    if (!mapRef.current) return;
+    if (isInitializedRef.current) return;
 
-    loadKakaoScript().then(() => {
+    const init = async () => {
+      await loadKakaoScript();
+
+      // 🔥 이게 핵심이다. 존재 여부와 상관없이 반드시 load 호출
       window.kakao.maps.load(() => {
-        mapInstance.current = new window.kakao.maps.Map(mapRef.current, {
-          center: new window.kakao.maps.LatLng(37.4979, 127.0276),
-          level: 6,
+        if (!mapRef.current) return;
+
+        const initialCenter = center
+          ? new window.kakao.maps.LatLng(
+            center.latitude,
+            center.longitude
+          )
+          : new window.kakao.maps.LatLng(37.4979, 127.0276);
+
+        const map = new window.kakao.maps.Map(mapRef.current, {
+          center: initialCenter,
+          level: 5,
         });
 
-        setMapReady(true);
+        mapInstanceRef.current = map;
+        isInitializedRef.current = true;
+
+        renderStations();
+        renderPolylines();
+        renderMidpoint();
       });
-    });
+    };
+
+    init().catch(console.error);
   }, []);
 
-  // 출발지 마커 렌더링
-  // stations 변경 시:
-  // - 제거된 마커 정리
-  // - 새 마커 생성
-  // - 기존 마커 위치 갱신
+  // =========================
+  // 2️⃣ center 이동
+  // =========================
   useEffect(() => {
-    if (!mapReady || !mapInstance.current) return;
+    if (!isInitializedRef.current) return;
+    if (!center) return;
 
-    markerMap.current.forEach((marker, id) => {
-      if (!stations.find((s) => s.id === id)) {
-        marker.setMap(null);
-        markerMap.current.delete(id);
-      }
-    });
+    mapInstanceRef.current.setCenter(
+      new window.kakao.maps.LatLng(
+        center.latitude,
+        center.longitude
+      )
+    );
+  }, [center?.latitude, center?.longitude]);
+
+  // =========================
+  // 3️⃣ 출발지 마커
+  // =========================
+  const renderStations = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    markersRef.current.forEach((m) => m.setMap(null));
+    markersRef.current = [];
 
     stations.forEach((s) => {
-      const position = new window.kakao.maps.LatLng(
-        s.latitude,
-        s.longitude
-      );
-
-      if (!markerMap.current.has(s.id)) {
-        const marker = new window.kakao.maps.Marker({
-          map: mapInstance.current,
-          position,
-          image: createColoredMarkerImage(s.color),
-        });
-
-        markerMap.current.set(s.id, marker);
-      } else {
-        markerMap.current.get(s.id)?.setPosition(position);
-      }
-    });
-  }, [stations, mapReady]);
-
-  // Polyline 렌더링
-  // zoom/center 변경과 분리하여 선이 사라지는 현상을 방지
-  useEffect(() => {
-    if (!mapReady || !mapInstance.current) return;
-
-    polylineList.current.forEach((line) => line.setMap(null));
-    polylineList.current = [];
-
-    polylines.forEach(({ path, color }) => {
-      const kakaoPath = path
-        .filter(
-          (p) =>
-            Number.isFinite(p.latitude) &&
-            Number.isFinite(p.longitude)
-        )
-        .map(
-          (p) =>
-            new window.kakao.maps.LatLng(p.latitude, p.longitude)
-        );
-
-      if (kakaoPath.length < 2) return;
-
-      const line = new window.kakao.maps.Polyline({
-        path: kakaoPath,
-        strokeWeight: 12,
-        strokeColor: color,
-        strokeOpacity: 1,
-        zIndex: 30,
+      const marker = new window.kakao.maps.Marker({
+        map,
+        position: new window.kakao.maps.LatLng(
+          s.latitude,
+          s.longitude
+        ),
       });
 
-      line.setMap(mapInstance.current);
-      polylineList.current.push(line);
+      markersRef.current.push(marker);
     });
-  }, [polylines, mapReady]);
+  };
 
-  // 중간지점 처리
-  // midpoint 변경 시:
-  // - 지도 중심을 중간지점으로 이동
-  // - 강제 zoom 적용
-  // - FiMapPin 기반 중간지점 마커 표시
   useEffect(() => {
-    if (!mapReady || !mapInstance.current) return;
+    if (!isInitializedRef.current) return;
+    renderStations();
+  }, [stations]);
 
-    if (midpointMarker.current) {
-      midpointMarker.current.setMap(null);
-      midpointMarker.current = null;
+  // =========================
+  // 4️⃣ 폴리라인
+  // =========================
+  const renderPolylines = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    polylinesRef.current.forEach((p) => p.setMap(null));
+    polylinesRef.current = [];
+
+    polylines.forEach((p) => {
+      const polyline = new window.kakao.maps.Polyline({
+        map,
+        path: p.path.map(
+          (pt) =>
+            new window.kakao.maps.LatLng(
+              pt.latitude,
+              pt.longitude
+            )
+        ),
+        strokeWeight: 4,
+        strokeColor: p.color,
+        strokeOpacity: 1,
+      });
+
+      polylinesRef.current.push(polyline);
+    });
+  };
+
+  useEffect(() => {
+    if (!isInitializedRef.current) return;
+    renderPolylines();
+  }, [polylines]);
+
+  // =========================
+  // 5️⃣ 중간지점 마커
+  // =========================
+  const renderMidpoint = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (midpointMarkerRef.current) {
+      midpointMarkerRef.current.setMap(null);
+      midpointMarkerRef.current = null;
     }
 
     if (!midpoint) return;
 
-    const center = new window.kakao.maps.LatLng(
+    const position = new window.kakao.maps.LatLng(
       midpoint.latitude,
       midpoint.longitude
     );
 
-    mapInstance.current.setCenter(center);
-    mapInstance.current.setLevel(2);
+    map.setCenter(position);
+    map.setLevel(2, { animate: true });
 
-    midpointMarker.current = new window.kakao.maps.Marker({
-      map: mapInstance.current,
-      position: center,
-      image: createMidpointPinImage(),
-      zIndex: 50,
+    midpointMarkerRef.current = new window.kakao.maps.Marker({
+      map,
+      position,
     });
-  }, [midpoint, mapReady]);
+  };
+
+
+  useEffect(() => {
+    if (!isInitializedRef.current) return;
+    renderMidpoint();
+  }, [midpoint?.latitude, midpoint?.longitude]);
 
   return (
     <div className={styles.wrapper}>

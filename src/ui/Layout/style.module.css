@@ -1,6 +1,9 @@
 .main {
   background: #f2f4f6;
   gap: 20px;
-  height: 100vh;
-  position:relative;
+  position: relative;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
