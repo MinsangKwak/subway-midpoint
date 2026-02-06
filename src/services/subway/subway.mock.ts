@@ -105,12 +105,9 @@ export const subwayStations: RawSubwayStation[] = [
 
   { id: 'seojeongni', name: '서정리', lineId: '1', latitude: 36.9956, longitude: 127.1032 },
   { id: 'cheonan', name: '천안', lineId: '1', latitude: 36.8100, longitude: 127.1464 },
+
   // =========================
-  // 2호선 (순환선)
-  //
-  // 주의:
-  // 실제 2호선은 순환선이지만,
-  // 현재 mock에서는 "일부 구간만 선형으로" 표현한다
+  // 2호선 (순환선 일부)
   // =========================
   { id: 'cityhall_2', name: '시청', lineId: '2', latitude: 37.5647, longitude: 126.9771 },
   { id: 'euljiro3', name: '을지로3가', lineId: '2', latitude: 37.5663, longitude: 126.9923 },
@@ -173,6 +170,34 @@ export const subwayStations: RawSubwayStation[] = [
   { id: 'dangsan_9', name: '당산', lineId: '9', latitude: 37.5338, longitude: 126.9020 },
   { id: 'yeouido_9', name: '여의도', lineId: '9', latitude: 37.5216, longitude: 126.9244 },
   { id: 'expressBus_9', name: '고속터미널', lineId: '9', latitude: 37.5048, longitude: 127.0049 },
+];
+
+// =========================
+// 환승역 메타 데이터
+//
+// 주의:
+// - subwayStations 배열은 그래프 생성을 위한 "원본 데이터"이므로 수정하지 않는다
+// - 환승역 여부, 포함 노선, UI 색상 표현 등은 이 메타 데이터를 기준으로 판단한다
+// - name 값은 RawSubwayStation.name 과 반드시 일치해야 한다
+// =========================
+
+// 2026-02-06 환승역 메타 타입
+export type TransferStationMeta = {
+  name: string;       // 환승 기준 역 이름
+  lineIds: string[];  // 포함된 노선 ID 목록
+};
+
+// 2026-02-06 환승역 메타 목록
+export const transferStations: TransferStationMeta[] = [
+  { name: '신도림', lineIds: ['1', '2'] },
+  { name: '시청', lineIds: ['1', '2'] },
+  { name: '서울역', lineIds: ['1', '4'] },
+  { name: '종로3가', lineIds: ['1', '3', '5'] },
+  { name: '동대문역사문화공원', lineIds: ['2', '5'] },
+  { name: '왕십리', lineIds: ['2', '5'] },
+  { name: '사당', lineIds: ['2', '4'] },
+  { name: '삼각지', lineIds: ['4', '6'] },
+  { name: '고속터미널', lineIds: ['3', '7', '9'] },
 ];
 
 // 이 mock 데이터는 다음 로직에서 사용된다.

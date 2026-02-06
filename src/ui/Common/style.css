@@ -106,10 +106,12 @@ body {
   background-color: #ffffff;
   -webkit-font-smoothing: antialiased;
 }
-html,body,#root{
-  width:100%;
-  height:100%;
+
+html,
+body {
+  overscroll-behavior: none;
 }
+
 
 /* Lists */
 ol,
