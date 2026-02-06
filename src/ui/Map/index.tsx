@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import styles from './style.module.css';
 
-import { TbMapPinCheck } from 'react-icons/tb';
+import { TbMapPinHeart } from "react-icons/tb";
 import { renderToStaticMarkup } from 'react-dom/server';
 
 declare global {
@@ -196,7 +196,7 @@ export const KakaoMap = ({
     if (!midpoint) return;
 
     const iconHtml = renderToStaticMarkup(
-      <TbMapPinCheck size={50} className="kakao-midpoint-icon" />
+      <TbMapPinHeart size={50} className="kakao-midpoint-icon" />
     );
 
     const overlay = new window.kakao.maps.CustomOverlay({
