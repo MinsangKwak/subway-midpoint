@@ -76,10 +76,11 @@ export const DepartureSection = ({
       if (!wrapperRef.current?.contains(e.target as Node)) {
         setStationCandidates([]);
         setHighlightIndex(0);
+        setActiveFieldId(null); // 포커스 해제
       }
     };
 
-    window.addEventListener('mousedown', handlePointerDownOutside);
+    window.addEventListener('mousedown', handlePointerDownOutside, true);
     return () =>
       window.removeEventListener('mousedown', handlePointerDownOutside);
   }, []);
