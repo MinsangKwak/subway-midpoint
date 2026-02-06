@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import styles from './style.module.css';
 
+import { TbMapPinCheck } from 'react-icons/tb';
+import { renderToStaticMarkup } from 'react-dom/server';
+
 declare global {
   interface Window {
     kakao: any;
@@ -14,21 +17,17 @@ type LatLng = {
 
 export type KakaoMapProps = {
   center?: LatLng;
-
   stations?: {
     id: string;
     latitude: number;
     longitude: number;
     color: string;
   }[];
-
   polylines?: {
     path: LatLng[];
     color: string;
   }[];
-
   midpoint?: LatLng | null;
-
   children?: React.ReactNode;
 };
 
@@ -47,8 +46,7 @@ const loadKakaoScript = (): Promise<void> =>
     script.async = true;
 
     script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error('Failed to load Kakao SDK'));
+    script.onerror = () => reject(new Error('Failed to load Kakao SDK'));
 
     document.head.appendChild(script);
   });
@@ -62,91 +60,92 @@ export const KakaoMap = ({
 }: KakaoMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
 
-  const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const mapRefInstance = useRef<any>(null);
+  const stationMarkersRef = useRef<any[]>([]);
   const polylinesRef = useRef<any[]>([]);
-  const midpointMarkerRef = useRef<any>(null);
+  const midpointOverlayRef = useRef<any>(null);
+  const whiteOverlayRef = useRef<any>(null);
 
-  const isInitializedRef = useRef(false);
+  const initializedRef = useRef(false);
 
-  // 지도 초기화
   useEffect(() => {
     if (!mapRef.current) return;
-    if (isInitializedRef.current) return;
+    if (initializedRef.current) return;
 
     const init = async () => {
       await loadKakaoScript();
 
-      // 🔥 이게 핵심이다. 존재 여부와 상관없이 반드시 load 호출
       window.kakao.maps.load(() => {
         if (!mapRef.current) return;
 
-        const initialCenter = center
-          ? new window.kakao.maps.LatLng(
-            center.latitude,
-            center.longitude
-          )
-          : new window.kakao.maps.LatLng(37.4979, 127.0276);
-
         const map = new window.kakao.maps.Map(mapRef.current, {
-          center: initialCenter,
+          center: center
+            ? new window.kakao.maps.LatLng(center.latitude, center.longitude)
+            : new window.kakao.maps.LatLng(37.4979, 127.0276),
           level: 5,
         });
 
-        mapInstanceRef.current = map;
-        isInitializedRef.current = true;
+        mapRefInstance.current = map;
+        initializedRef.current = true;
 
+        renderWhiteOverlay();
         renderStations();
         renderPolylines();
+        fitBounds();
         renderMidpoint();
       });
     };
 
-    init().catch(console.error);
+    init();
   }, []);
 
-  // center 이동
-  useEffect(() => {
-    if (!isInitializedRef.current) return;
-    if (!center) return;
-
-    mapInstanceRef.current.setCenter(
-      new window.kakao.maps.LatLng(
-        center.latitude,
-        center.longitude
-      )
-    );
-  }, [center?.latitude, center?.longitude]);
-
-  // 출발지 마커
-  const renderStations = () => {
-    const map = mapInstanceRef.current;
+  const renderWhiteOverlay = () => {
+    const map = mapRefInstance.current;
     if (!map) return;
 
-    markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = [];
+    if (whiteOverlayRef.current) {
+      whiteOverlayRef.current.setMap(null);
+      whiteOverlayRef.current = null;
+    }
+
+    if (polylines.length === 0 && !midpoint) return;
+
+    const overlay = new window.kakao.maps.CustomOverlay({
+      position: map.getCenter(),
+      content: `<div class="kakao-white-overlay"></div>`,
+      xAnchor: 0.5,
+      yAnchor: 0.5,
+      zIndex: 1,
+    });
+
+    overlay.setMap(map);
+    whiteOverlayRef.current = overlay;
+
+    window.kakao.maps.event.addListener(map, 'idle', () => {
+      overlay.setPosition(map.getCenter());
+    });
+  };
+
+  const renderStations = () => {
+    const map = mapRefInstance.current;
+    if (!map) return;
+
+    stationMarkersRef.current.forEach((m) => m.setMap(null));
+    stationMarkersRef.current = [];
 
     stations.forEach((s) => {
       const marker = new window.kakao.maps.Marker({
         map,
-        position: new window.kakao.maps.LatLng(
-          s.latitude,
-          s.longitude
-        ),
+        position: new window.kakao.maps.LatLng(s.latitude, s.longitude),
+        zIndex: 5,
       });
 
-      markersRef.current.push(marker);
+      stationMarkersRef.current.push(marker);
     });
   };
 
-  useEffect(() => {
-    if (!isInitializedRef.current) return;
-    renderStations();
-  }, [stations]);
-
-  // 폴리라인
   const renderPolylines = () => {
-    const map = mapInstanceRef.current;
+    const map = mapRefInstance.current;
     if (!map) return;
 
     polylinesRef.current.forEach((p) => p.setMap(null));
@@ -156,56 +155,73 @@ export const KakaoMap = ({
       const polyline = new window.kakao.maps.Polyline({
         map,
         path: p.path.map(
-          (pt) =>
-            new window.kakao.maps.LatLng(
-              pt.latitude,
-              pt.longitude
-            )
+          (pt) => new window.kakao.maps.LatLng(pt.latitude, pt.longitude)
         ),
         strokeWeight: 4,
         strokeColor: p.color,
         strokeOpacity: 1,
+        zIndex: 5,
       });
 
       polylinesRef.current.push(polyline);
     });
   };
 
-  useEffect(() => {
-    if (!isInitializedRef.current) return;
-    renderPolylines();
-  }, [polylines]);
+  const fitBounds = () => {
+    const map = mapRefInstance.current;
+    if (!map || polylines.length === 0) return;
 
-  // 중간지점 마커
+    const bounds = new window.kakao.maps.LatLngBounds();
+
+    polylines.forEach((p) => {
+      p.path.forEach((pt) => {
+        bounds.extend(
+          new window.kakao.maps.LatLng(pt.latitude, pt.longitude)
+        );
+      });
+    });
+
+    map.setBounds(bounds, 40);
+  };
+
   const renderMidpoint = () => {
-    const map = mapInstanceRef.current;
+    const map = mapRefInstance.current;
     if (!map) return;
 
-    if (midpointMarkerRef.current) {
-      midpointMarkerRef.current.setMap(null);
-      midpointMarkerRef.current = null;
+    if (midpointOverlayRef.current) {
+      midpointOverlayRef.current.setMap(null);
+      midpointOverlayRef.current = null;
     }
 
     if (!midpoint) return;
 
-    const position = new window.kakao.maps.LatLng(
-      midpoint.latitude,
-      midpoint.longitude
+    const iconHtml = renderToStaticMarkup(
+      <TbMapPinCheck size={50} className="kakao-midpoint-icon" />
     );
 
-    map.setCenter(position);
-    map.setLevel(1, { animate: true });
-
-    midpointMarkerRef.current = new window.kakao.maps.Marker({
-      map,
-      position,
+    const overlay = new window.kakao.maps.CustomOverlay({
+      position: new window.kakao.maps.LatLng(
+        midpoint.latitude,
+        midpoint.longitude
+      ),
+      content: `<div class="kakao-midpoint-marker">${iconHtml}</div>`,
+      yAnchor: 1,
+      zIndex: 10,
     });
+
+    overlay.setMap(map);
+    midpointOverlayRef.current = overlay;
   };
 
   useEffect(() => {
-    if (!isInitializedRef.current) return;
+    if (!initializedRef.current) return;
+
+    renderWhiteOverlay();
+    renderStations();
+    renderPolylines();
+    fitBounds();
     renderMidpoint();
-  }, [midpoint?.latitude, midpoint?.longitude]);
+  }, [stations, polylines, midpoint]);
 
   return (
     <div className={styles.wrapper}>

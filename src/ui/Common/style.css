@@ -177,3 +177,41 @@ em {
 [hidden] {
   display: none !important;
 }
+
+.kakao-white-overlay {
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+/* midpoint marker wrapper */
+.kakao-midpoint-marker {
+  /* transform: translateY(-8px); */
+  width: 64px;
+  height: 64px;
+  cursor: pointer;
+  filter: drop-shadow(0 6px 14px rgba(220, 38, 38, 0.45));
+}
+
+/* icon 자체 스타일 */
+.kakao-midpoint-icon {
+  color: #dc2626;
+  animation: midpoint-float 2s ease-in-out infinite;
+}
+
+@keyframes midpoint-float {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-10px) scale(1.02);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
