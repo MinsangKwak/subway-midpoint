@@ -27,3 +27,9 @@
   font-size: 16px;
   line-height: 1.4;
 }
+
+.title-description {
+  display: inline-block;
+  font-size: 13px;
+  color: #6B7280;
+}

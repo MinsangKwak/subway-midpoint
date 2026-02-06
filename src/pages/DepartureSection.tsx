@@ -107,7 +107,7 @@ export const DepartureInputSection = ({
 
   return (
     <div ref={wrapperRef}>
-      <Title title="출발지를 입력하고 중간장소를 찾아보세요!" />
+      <Title title="출발지를 입력하고 중간장소를 찾아보세요!" subtitle="출발지를 2곳 이상 입력해야 중간지점을 찾을 수 있어요." />
 
       <InputList>
         {departureFields.map((field, index) => {
