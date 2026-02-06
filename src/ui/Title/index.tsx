@@ -4,6 +4,7 @@ import styles from './style.module.css';
 type TitleProps = {
   icon?: ReactNode;
   title: string;
+  subtitle?: string;
   align?: 'center' | 'left';
 };
 
@@ -15,6 +16,7 @@ const ALIGN_CLASS_MAP = {
 export const Title = ({
   icon,
   title,
+  subtitle,
   align = 'center',
 }: TitleProps) => {
   return (
@@ -31,6 +33,9 @@ export const Title = ({
       )}
       <div className={styles['title-text']}>
         {title}
+        {subtitle && (
+          <span className={styles['title-description']}>{subtitle}</span>
+        )}
       </div>
     </div>
   );
