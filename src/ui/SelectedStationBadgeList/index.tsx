@@ -11,6 +11,9 @@
 
 import type { CSSProperties } from 'react';
 import styles from './style.module.css';
+import { IoClose } from "react-icons/io5";
+
+
 
 export type SelectedStationBadge = {
   id: string;        // 역 ID
@@ -68,18 +71,29 @@ export const SelectedStationBadgeList = ({
           <button
             key={station.id}
             type="button"
-            className={styles.container}
-            style={backgroundStyle}
+            className={styles['button-transfer']}
+
             onClick={() => onSelect?.(station.id)}
           >
-            {/* <span className={styles.badge} /> */}
-            <span
-              className={styles.badge}
-              style={{
-                color: colors[0] ?? '#111',
-              }}
-            >
-              {station.lineIds.length === 1 ? station.lineIds[0] : ''}
+
+            <span className={styles['transfer-title']} style={backgroundStyle}>
+              환승역
+            </span>
+
+
+            <span className={styles.badges}>
+              {station.lineIds.map((lineId, index) => (
+                <span
+                  key={lineId}
+                  className={styles.badge}
+                  style={{
+                    color: station.colors[index] ?? '#E5E7EB',
+                    borderColor: station.colors[index] ?? '#E5E7EB'
+                  }}
+                >
+                  {lineId}
+                </span>
+              ))}
             </span>
 
             <span className={styles.name}>
@@ -92,14 +106,16 @@ export const SelectedStationBadgeList = ({
                 role="button"
                 aria-label={`${station.name} 삭제`}
                 onClick={(event) => {
-                  event.stopPropagation(); // 뱃지 클릭 방지
+                  event.stopPropagation();
                   onRemove(station.id);
                 }}
               >
-                ×
+                <IoClose />
+
               </span>
             )}
           </button>
+
         );
       })}
     </div>

@@ -69,9 +69,7 @@ export const KakaoMap = ({
 
   const isInitializedRef = useRef(false);
 
-  // =========================
-  // 1️⃣ 지도 초기화 (중요)
-  // =========================
+  // 지도 초기화
   useEffect(() => {
     if (!mapRef.current) return;
     if (isInitializedRef.current) return;
@@ -107,9 +105,7 @@ export const KakaoMap = ({
     init().catch(console.error);
   }, []);
 
-  // =========================
-  // 2️⃣ center 이동
-  // =========================
+  // center 이동
   useEffect(() => {
     if (!isInitializedRef.current) return;
     if (!center) return;
@@ -122,9 +118,7 @@ export const KakaoMap = ({
     );
   }, [center?.latitude, center?.longitude]);
 
-  // =========================
-  // 3️⃣ 출발지 마커
-  // =========================
+  // 출발지 마커
   const renderStations = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -150,9 +144,7 @@ export const KakaoMap = ({
     renderStations();
   }, [stations]);
 
-  // =========================
-  // 4️⃣ 폴리라인
-  // =========================
+  // 폴리라인
   const renderPolylines = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -184,9 +176,7 @@ export const KakaoMap = ({
     renderPolylines();
   }, [polylines]);
 
-  // =========================
-  // 5️⃣ 중간지점 마커
-  // =========================
+  // 중간지점 마커
   const renderMidpoint = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -204,14 +194,13 @@ export const KakaoMap = ({
     );
 
     map.setCenter(position);
-    map.setLevel(2, { animate: true });
+    map.setLevel(1, { animate: true });
 
     midpointMarkerRef.current = new window.kakao.maps.Marker({
       map,
       position,
     });
   };
-
 
   useEffect(() => {
     if (!isInitializedRef.current) return;

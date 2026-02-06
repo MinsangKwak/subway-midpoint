@@ -8,7 +8,8 @@
   flex-direction: column;
 }
 
-.container {
+.button-transfer {
+  border: 1px solid rgb(204, 204, 204);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -18,22 +19,62 @@
   font-size: 13px;
   font-weight: 600;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  color: #FFFFFF;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* 사파리 */
   width: fit-content;
+  font-size: 12px;
+}
+
+.transfer-title {
+  display: inline-block;
+  padding: 0 6px;
+  height: 20px;
+  border-radius: 18px;
+  color: #FFFFFF;
+  font-size: 12px;
+}
+
+.badges {
+  display: flex;
+  gap: 4px;
+  font-size: 12px;
 }
 
 .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
   height: 20px;
   border-radius: 100%;
   background-color: #FFFFFF;
-  line-height: 20px;
+  border-width: 2px;
+  border-style: solid;
+  font-size: 12px;
 }
 
 .name {
   font-weight: 700;
+  display: inline-block;
+  padding: 0 6px;
+  line-height: 18px;
+  border-radius: 18px;
+  background-color: #FFFFFF;
+  color: #222222;
+  border: 1px solid #c5c5c5;
+  font-size: 12px;
 }
 
 .remove {
   padding: 0 2px;
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  color: #222222;
+  background-color: #FFFFFF;
+  border: 1px solid #c5c5c5;
+  border-radius: 100%;
 }
