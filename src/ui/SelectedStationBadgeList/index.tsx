@@ -75,45 +75,49 @@ export const SelectedStationBadgeList = ({
 
             onClick={() => onSelect?.(station.id)}
           >
-
-            <span className={styles['transfer-title']} style={backgroundStyle}>
-              환승역
-            </span>
-
-
-            <span className={styles.badges}>
-              {station.lineIds.map((lineId, index) => (
-                <span
-                  key={lineId}
-                  className={styles.badge}
-                  style={{
-                    color: station.colors[index] ?? '#E5E7EB',
-                    borderColor: station.colors[index] ?? '#E5E7EB'
-                  }}
-                >
-                  {lineId}
-                </span>
-              ))}
-            </span>
-
-            <span className={styles.name}>
-              {station.name}
-            </span>
-
-            {onRemove && (
-              <span
-                className={styles.remove}
-                role="button"
-                aria-label={`${station.name} 삭제`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onRemove(station.id);
-                }}
-              >
-                <IoClose />
-
+            {station.lineIds.length >= 2 && (
+              <span className={styles['transfer-title']}>
+                환승
               </span>
             )}
+
+
+            <span className={styles['transfer-description']}>
+
+              <span className={styles['badge-container']}>
+                {station.lineIds.map((lineId, index) => (
+                  <span
+                    key={lineId}
+                    className={styles.badge}
+                    style={{
+                      backgroundColor: station.colors[index] ?? '#E5E7EB'
+                    }}
+                  >
+                    {lineId}
+                  </span>
+                ))}
+              </span>
+
+              <span className={styles['station-name']}>
+                {station.name}
+              </span>
+
+              {onRemove && (
+                <span
+                  className={styles['button-remove']}
+                  role="button"
+                  aria-label={`${station.name} 삭제`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRemove(station.id);
+                  }}
+                >
+                  <IoClose />
+
+                </span>
+              )}
+            </span>
+
           </button>
 
         );
