@@ -82,7 +82,7 @@ export const DepartureSection = ({
 
     window.addEventListener('mousedown', handlePointerDownOutside, true);
     return () =>
-      window.removeEventListener('mousedown', handlePointerDownOutside);
+      window.removeEventListener('mousedown', handlePointerDownOutside, true);
   }, []);
 
   const addDepartureField = () => {
