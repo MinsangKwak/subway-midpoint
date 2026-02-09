@@ -194,6 +194,7 @@ em {
   height: 64px;
   cursor: pointer;
   filter: drop-shadow(0 6px 14px rgba(220, 38, 38, 0.45));
+  pointer-events: none;
 }
 
 /* icon 자체 스타일 */

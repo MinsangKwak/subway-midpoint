@@ -124,7 +124,7 @@ export const HomePage = () => {
     setMidpointName(null);
   };
 
-  // ✅ 중간지점 찾기 (핵심 수정)
+  // 중간지점 찾기 (핵심 수정)
   const handleFindMidpoint = () => {
     const startIds = selectedStations.map((s) => s.id);
     if (startIds.length < 2) return;
@@ -138,7 +138,7 @@ export const HomePage = () => {
       longitude: midpointNode.longitude,
     };
 
-    // ✅ 여기 중요
+    // 여기 중요
     setMidpoint(nextMidpoint);
     setMapCenter(nextMidpoint); // ← 이 줄이 없어서 지도/마커가 안 움직였음
     setMidpointName(midpointNode.name);
