@@ -1,5 +1,12 @@
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import './ui/Common/style.css'; // reset / common 전역 적용
-import App from './App';
+import '@/styles/reset.css';
+import '@/styles/tokens.css';
+import '@/styles/app.css';
+import { App } from '@/app/App';
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);

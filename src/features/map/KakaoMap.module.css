@@ -1,0 +1,168 @@
+.wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--paper-2);
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* 결과가 있을 때 지도 타일을 살짝 눌러 경로가 도드라지게 한다 */
+.dim {
+  position: absolute;
+  inset: 0;
+  background: var(--map-dim);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.controls {
+  position: absolute;
+  right: var(--sp-4);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-2);
+  background:
+    radial-gradient(circle at 30% 20%, var(--signal-soft), transparent 45%),
+    var(--paper-2);
+}
+
+.fallback code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--paper);
+  font-size: 13px;
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: var(--sp-6);
+  transform: translateX(-50%);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-tag);
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 13px;
+  z-index: 3;
+  animation: toast 2.4s ease forwards;
+}
+
+@keyframes toast {
+  0%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---- 지도 위 오버레이 (전역 클래스처럼 쓰이지만 CSS Modules 해시가 붙는다) ---- */
+
+.marker {
+  --marker: var(--signal);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(calc(-9px));
+}
+
+.markerDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--marker);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  flex: none;
+}
+
+.markerLabel {
+  padding: 2px 8px;
+  border-radius: var(--r-tag);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.midpoint {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.midpointPin {
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--signal);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(255, 106, 61, 0.55);
+  order: 2;
+}
+
+.midpointPulse {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  border-radius: 50%;
+  background: var(--signal);
+  opacity: 0.35;
+  animation: pulse 1.8s ease-out infinite;
+}
+
+.midpointLabel {
+  order: 1;
+  padding: 4px 10px;
+  border-radius: var(--r-tag);
+  background: var(--signal);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  margin-bottom: 4px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .midpointPulse {
+    animation: none;
+  }
+}
