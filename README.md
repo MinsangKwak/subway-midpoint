@@ -2,7 +2,8 @@
 
 여러 사람의 출발역을 넣으면 **모두에게 공평한 지하철 중간 지점**을 찾아주는 웹 앱입니다.
 
-- 서비스: https://minsangkwak.github.io/subway-midpoint/
+- 운영: https://minsangkwak.github.io/subway-midpoint/
+- dev 미리보기: https://minsangkwak.github.io/subway-midpoint/dev/
 - 기준: 가장 오래 걸리는 사람의 소요시간을 최소화하고, 같으면 전체 합계가 작은 역
 - 데이터: 수도권 주요 역 샘플. 소요시간은 역 간 거리로 추정한 값입니다
 
@@ -56,18 +57,31 @@ npm run dev            # http://localhost:5173
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest, 도메인·리듀서·포맷 단위 테스트 |
 | `npm run build` | 타입검사 후 Vite 빌드 (루트 경로, Vercel용) |
-| `npx vite build --mode pages` | GitHub Pages용 `/subway-midpoint/` 경로 빌드 |
+| `npx vite build --mode pages` | 운영용 `/subway-midpoint/` 경로 빌드 |
+| `npx vite build --mode pages-dev` | 미리보기용 `/subway-midpoint/dev/` 경로 빌드. 패널에 `dev preview` 표시 |
 
 카카오 개발자 콘솔 > 앱 > 플랫폼 > Web 에 `http://localhost:5173`과 배포 도메인을 등록해야 지도가 뜹니다.
 
 ## 브랜치와 배포
 
-| 브랜치 | 역할 |
-| --- | --- |
-| `dev` | 개발. push·PR 마다 CI(lint·typecheck·test·build) |
-| `main` | 배포. `dev → main` PR 병합 시 GitHub Actions가 Pages에 배포 |
+| 브랜치 | 역할 | 주소 |
+| --- | --- | --- |
+| `dev` | 개발. push·PR 마다 CI(lint·typecheck·test·build). push 시 미리보기 배포 | https://minsangkwak.github.io/subway-midpoint/dev/ |
+| `main` | 운영. `dev → main` PR 병합 시 배포 | https://minsangkwak.github.io/subway-midpoint/ |
 
-배포 워크플로는 저장소 변수 `KAKAO_MAP_KEY`를 `VITE_KAKAO_MAP_KEY`로 주입합니다.
+```
+dev push ──▶ CI ──▶ deploy.yml (main + dev 함께 빌드) ──▶ Pages
+                │
+                └─▶ PR dev → main ──▶ merge ──▶ deploy.yml ──▶ Pages
+```
+
+GitHub Pages 배포물은 저장소당 하나라서, `deploy.yml`이 `main`과 `dev`를 모두 체크아웃해 각각 `/`와 `/dev/`에 넣은 뒤 한 번에 올립니다. 어느 브랜치가 바뀌어도 두 주소가 함께 최신이 됩니다. 카카오 키는 저장소 변수 `KAKAO_MAP_KEY`를 `VITE_KAKAO_MAP_KEY`로 주입합니다.
+
+릴리스 순서
+
+1. `dev`에 커밋·푸시 → CI 통과 확인 → 미리보기 주소에서 확인
+2. `gh pr create --base main --head dev` → 병합
+3. 운영 주소 확인
 
 ## 기술 스택
 
