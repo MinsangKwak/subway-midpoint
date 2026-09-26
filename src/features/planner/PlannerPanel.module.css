@@ -22,6 +22,16 @@
   color: var(--signal);
 }
 
+.previewTag {
+  margin-left: var(--sp-1);
+  padding: 2px 8px;
+  border-radius: var(--r-tag);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
 .brandMark {
   width: 14px;
   height: 14px;

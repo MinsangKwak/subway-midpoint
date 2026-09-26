@@ -1,9 +1,12 @@
 name: Deploy to GitHub Pages
 
-# main에 병합될 때만 배포한다. dev 개발 중에는 CI만 돈다.
+# main 과 dev 둘 다 한 사이트에 올린다.
+#   main → https://minsangkwak.github.io/subway-midpoint/       (운영)
+#   dev  → https://minsangkwak.github.io/subway-midpoint/dev/   (미리보기)
+# Pages 배포물은 하나뿐이라, 어느 브랜치가 바뀌든 두 브랜치를 모두 빌드해 함께 올린다.
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
@@ -18,24 +21,52 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # 저장소 Settings > Variables 의 KAKAO_MAP_KEY (JavaScript 키, 도메인 제한으로 보호됨)
+      VITE_KAKAO_MAP_KEY: ${{ vars.KAKAO_MAP_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          path: dev
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
-      - name: Build for Pages
-        run: npx vite build --mode pages
-        env:
-          # 저장소 Settings > Variables 의 KAKAO_MAP_KEY (JavaScript 키, 도메인 제한으로 보호됨)
-          VITE_KAKAO_MAP_KEY: ${{ vars.KAKAO_MAP_KEY }}
+
+      - name: Build main → /
+        working-directory: main
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npx vite build --mode pages
+
+      - name: Build dev → /dev/
+        working-directory: dev
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npx vite build --mode pages-dev
+
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -R main/dist/. site/
+          mkdir -p site/dev
+          cp -R dev/dist/. site/dev/
+          find site -maxdepth 2 -name index.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
   deploy:
     needs: build
