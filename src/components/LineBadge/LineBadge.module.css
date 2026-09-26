@@ -1,0 +1,30 @@
+.group {
+  display: inline-flex;
+  gap: 3px;
+  flex: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-tag);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  /* 밝은 노선색(9호선 등) 위에서도 읽히도록 얇은 그림자 */
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
+  flex: none;
+}
+
+.sm {
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+}
+
+.md {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+}

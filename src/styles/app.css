@@ -1,0 +1,101 @@
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.app {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app__map {
+  position: absolute;
+  inset: 0;
+}
+
+/* 데스크톱: 왼쪽에 떠 있는 종이 패널. 상단에 노선색 띠를 두른다 */
+.app__panel {
+  position: absolute;
+  top: var(--sp-4);
+  left: var(--sp-4);
+  width: var(--panel-w);
+  max-height: calc(100dvh - var(--sp-4) * 2);
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-radius: var(--r-panel);
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.app__panel::before {
+  content: '';
+  display: block;
+  height: 6px;
+  flex: none;
+  background: linear-gradient(
+    90deg,
+    #0052a4 0 11.1%,
+    #00a84d 0 22.2%,
+    #ef7c1c 0 33.3%,
+    #00a5de 0 44.4%,
+    #996cac 0 55.5%,
+    #cd7c2f 0 66.6%,
+    #747f00 0 77.7%,
+    #e6186c 0 88.8%,
+    #bdb092 0 100%
+  );
+}
+
+.app__panelBody {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.app__handle {
+  display: none;
+}
+
+/* 모바일: 하단 시트 */
+@media (max-width: 720px) {
+  .app__panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: min(80dvh, 680px);
+    border-radius: var(--r-panel) var(--r-panel) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    transition: transform 0.28s ease;
+  }
+
+  .app__panel--collapsed {
+    transform: translateY(calc(100% - var(--collapsed-h, 104px)));
+  }
+
+  .app__handle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 28px;
+    width: 100%;
+    flex: none;
+  }
+
+  .app__handle::before {
+    content: '';
+    width: 44px;
+    height: 5px;
+    border-radius: var(--r-tag);
+    background: var(--rule-strong);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app__panel {
+    transition: none;
+  }
+}

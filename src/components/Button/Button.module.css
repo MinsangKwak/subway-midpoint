@@ -1,0 +1,95 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  font-weight: 700;
+  border-radius: var(--r-ctl);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.05s ease;
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.md {
+  min-height: 52px;
+  padding: 0 var(--sp-5);
+  font-size: 16px;
+}
+
+.sm {
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  font-size: 13px;
+}
+
+.full {
+  width: 100%;
+}
+
+.primary {
+  background: var(--signal);
+  color: var(--signal-fg);
+  box-shadow: 0 6px 16px rgba(255, 106, 61, 0.35);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--signal-strong);
+}
+
+.primary:disabled {
+  background: var(--paper-2);
+  color: var(--ink-3);
+  box-shadow: none;
+}
+
+.secondary {
+  background: var(--signal-soft);
+  color: var(--signal-strong);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.ghost:disabled {
+  color: var(--ink-3);
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-tag);
+  color: var(--ink-2);
+  transition: background-color 0.15s ease;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.iconAccent {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+  width: var(--tap);
+  height: var(--tap);
+}
+
+.iconAccent:hover:not(:disabled) {
+  color: var(--signal);
+}
