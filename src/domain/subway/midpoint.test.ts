@@ -75,9 +75,9 @@ describe('calculateMidpoint (real dataset)', () => {
     const result = calculateMidpoint(subwayGraph, [nodeOf('의정부'), nodeOf('천안')]);
     const leg = result!.best.legs.find((l) => l.fromId === nodeOf('의정부'))!;
     // 예전 데이터는 의정부↔가산디지털단지가 직결돼 있었다. 지금은 반드시 구로를 거친다
-    const i = leg.nodeIds.indexOf('gasan');
+    const i = leg.nodeIds.indexOf('l1_가산디지털단지');
     expect(i).toBeGreaterThan(0);
-    expect(leg.nodeIds[i - 1]).toBe('guro');
-    expect(leg.nodeIds).toContain('uijeongbu');
+    expect(leg.nodeIds[i - 1]).toBe('l1_구로');
+    expect(leg.nodeIds).toContain('l1_의정부');
   });
 });
