@@ -94,7 +94,13 @@ export const PlannerPanel = ({ planner, onComputed }: Props) => {
       )}
 
       <footer className={styles.footer}>
-        <p>수도권 주요 {stationCatalog.stations.length}개 역 샘플 데이터로 동작해요.</p>
+        <p>
+          수도권 전철 1~9호선 {stationCatalog.stations.length}개 역 · 역 데이터 ©{' '}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+            OpenStreetMap
+          </a>{' '}
+          contributors
+        </p>
         <a href="https://github.com/MinsangKwak/subway-midpoint" target="_blank" rel="noreferrer">
           GitHub
         </a>

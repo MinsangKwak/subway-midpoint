@@ -28,6 +28,10 @@ export const TRANSFER_MINUTES = 5;
 export const normalizeStationName = (name: string) =>
   name.replace(/\s+/g, '').replace(/역$/, '');
 
+// 환승 판단과 이름 단위 집계에 쓰는 키. transferName 이 있으면 그것을 우선한다
+export const stationKey = (s: Pick<RawStation, 'name' | 'transferName'>) =>
+  normalizeStationName(s.transferName ?? s.name);
+
 const addEdge = (adj: Record<string, GraphEdge[]>, from: string, edge: GraphEdge) => {
   const list = (adj[from] ??= []);
   if (list.some((e) => e.to === edge.to && e.kind === edge.kind)) return;
@@ -49,7 +53,7 @@ export const buildSubwayGraph = (
     if (nodes[s.id]) throw new Error(`duplicate station id: ${s.id}`);
     nodes[s.id] = s;
     adj[s.id] = [];
-    (nodesByName[normalizeStationName(s.name)] ??= []).push(s.id);
+    (nodesByName[stationKey(s)] ??= []).push(s.id);
   }
 
   // 같은 구간 안에서 이웃한 역끼리 양방향 연결

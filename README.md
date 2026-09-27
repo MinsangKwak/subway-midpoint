@@ -5,7 +5,7 @@
 - 운영: https://minsangkwak.github.io/subway-midpoint/
 - dev 미리보기: https://minsangkwak.github.io/subway-midpoint/dev/
 - 기준: 가장 오래 걸리는 사람의 소요시간을 최소화하고, 같으면 전체 합계가 작은 역
-- 데이터: 수도권 주요 역 샘플. 소요시간은 역 간 거리로 추정한 값입니다
+- 데이터: 수도권 전철 1~9호선 전 역 (OpenStreetMap, ODbL). 소요시간은 역 간 거리로 추정한 값입니다
 
 ## 동작
 
@@ -28,13 +28,28 @@ src/
 │  ├─ dijkstra.ts     이진 힙 다익스트라, 다중 출발점 지원
 │  ├─ midpoint.ts     minimax 중간지점 + 상위 후보
 │  └─ catalog.ts      역 이름 단위 카탈로그·검색
-├─ data/subway/       노선·역·운행 구간 데이터
+├─ data/subway/       노선 색, 역·운행 구간 데이터 (stations.ts 는 스크립트가 생성)
 ├─ features/
 │  ├─ planner/        출발지 입력(콤보박스)·결과 카드·상태(reducer)
 │  └─ map/            카카오맵 로더·타입·마커/경로 렌더링
 ├─ components/        Button, LineBadge, Icon
 └─ styles/            토큰(라이트·다크), reset, 레이아웃
 ```
+
+## 역 데이터
+
+`src/data/subway/stations.ts`는 손으로 고치지 않고 스크립트로 만듭니다.
+
+```bash
+npm run data:stations            # Overpass API 에서 새로 받는다
+node scripts/fetch-stations.mjs --cached   # 마지막 응답(.cache/)을 다시 쓴다
+```
+
+- 출처: OpenStreetMap 의 `route=subway` 관계(ref 1~9). 정차역이 운행 순서대로 들어 있어 그대로 구간이 됩니다
+- 급행·특급 관계는 역을 건너뛰어 가짜 인접 간선을 만들므로 제외합니다
+- `강변(동서울터미널)`처럼 괄호 부기가 붙은 이름은 앞부분만 표시하고 원래 표기는 검색 별칭으로 남깁니다
+- 노선마다 이름이 다른 환승역(4호선 총신대입구 ↔ 7호선 이수)은 `transferName`으로 묶습니다
+- 실행 결과의 "끝 역" 목록으로 데이터를 검증합니다. 지선 끝이 아닌 역이 나오면 관계 데이터에 문제가 있는 것입니다
 
 설계에서 지킨 것
 
@@ -89,6 +104,6 @@ React 19 · TypeScript · Vite 7 · Vitest · ESLint 9 · CSS Modules · Kakao M
 
 ## 다음 단계
 
-- 수도권 전체 역 데이터 연동 (공공데이터 API)
+- 경의중앙·분당·신분당 등 광역 노선 추가
 - 실제 시각표 기반 소요시간
 - 결과 URL 공유 (쿼리스트링 상태 복원)
