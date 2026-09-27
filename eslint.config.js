@@ -27,4 +27,30 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ['src/domain/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: ['react', 'react-dom'],
+        patterns: [{ group: ['@/app/**', '@/features/**', '@/data/**', '@/shared/**', '../../app/**', '../../features/**', '../../data/**', '../../shared/**'], message: '도메인 로직은 UI와 생성 데이터에 의존하지 않습니다.' }],
+      }],
+    },
+  },
+  {
+    files: ['src/shared/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{ group: ['@/app/**', '@/features/**', '@/data/**', '@/domain/**', '**/features/**', '**/data/**', '**/domain/**', '**/app/**'], message: '공통 모듈은 앱·기능·지하철 데이터에 의존하지 않습니다.' }],
+      }],
+    },
+  },
+  ...['planner', 'map'].map((feature) => ({
+    files: [`src/features/${feature}/**/*.{ts,tsx}`],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{ group: ['@/app/**', `@/features/${feature === 'planner' ? 'map' : 'planner'}/**`, `**/${feature === 'planner' ? 'map' : 'planner'}/**`], message: '기능 간 연결은 app에서 조립합니다.' }],
+      }],
+    },
+  })),
 );

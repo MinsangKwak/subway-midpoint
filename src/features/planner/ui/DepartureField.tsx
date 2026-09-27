@@ -3,8 +3,8 @@ import { stationCatalog } from '@/data/subway';
 import { searchStations } from '@/domain/subway/catalog';
 import { normalizeStationName } from '@/domain/subway/graph';
 import type { Station } from '@/domain/subway/types';
-import { Icon } from '@/components/Icon';
-import { LineBadges } from '@/components/LineBadge/LineBadge';
+import { Icon } from '@/shared/ui/Icon';
+import { LineBadges } from '@/features/planner/ui/LineBadge/LineBadge';
 import styles from './DepartureField.module.css';
 
 type Props = {

@@ -4,7 +4,7 @@
 
 React·TypeScript로 역 검색, 후보 비교와 지도 경로 표시를 연결했습니다. 노선의 분기·순환·환승을 데이터로 표현하고, 계산 로직을 UI에서 분리해 테스트할 수 있도록 구성했습니다.
 
-[서비스](https://minsangkwak.github.io/subway-midpoint/) · [개발 미리보기](https://minsangkwak.github.io/subway-midpoint/dev/) · [개발 가이드](docs/DEVELOPMENT.md) · [운영·배포](docs/OPERATIONS.md)
+[서비스](https://minsangkwak.github.io/subway-midpoint/) · [개발 미리보기](https://minsangkwak.github.io/subway-midpoint/dev/) · [아키텍처](docs/ARCHITECTURE.md) · [개발 가이드](docs/DEVELOPMENT.md) · [문서 목록](docs/README.md)
 
 > 문서 기준: 2026-09-27. 수도권 전철 1~9호선의 OpenStreetMap 데이터를 사용합니다. 소요시간은 거리와 환승 비용으로 계산한 추정값입니다.
 
@@ -30,9 +30,9 @@ React·TypeScript로 역 검색, 후보 비교와 지도 경로 표시를 연결
 | 환승역 출발 시 첫 노선 선택에도 환승 비용이 붙을 수 있음 | 해당 역의 노선별 노드를 모두 출발점으로 넣는 다중 출발점 다익스트라 | [이진 최소 힙·최단경로](src/domain/subway/dijkstra.ts) |
 | 추천 기준과 동점 처리에 따라 결과가 달라짐 | 최대 예상 시간, 합계, 역 이름순으로 후보를 정렬하고 경로 복원 | [중간지점 계산](src/domain/subway/midpoint.ts) |
 | 원본 데이터에 급행·중복 이름·환승 별칭이 섞임 | 급행 제외, 표시 이름 정규화, 별칭 보존과 환승역 통합 | [데이터 생성](scripts/fetch-stations.mjs) · [데이터 검증](src/data/subway/stations.test.ts) |
-| 입력 조건이 바뀌어도 이전 계산 결과가 남을 수 있음 | reducer에서 입력 변경과 결과·오류 초기화를 함께 처리 | [상태 전이](src/features/planner/plannerReducer.ts) |
-| 자동완성을 키보드나 한글 조합 중에 사용하기 어려움 | ARIA combobox, 방향키·Enter·Escape, IME 조합 상태 처리 | [역 검색 입력](src/features/planner/DepartureField.tsx) |
-| 지도 SDK 오류가 핵심 기능까지 막을 수 있음 | 계산과 지도 표시를 분리하고 로딩·키 누락·오류 상태 제공 | [지도 연동](src/features/map/KakaoMap.tsx) · [SDK 로더](src/features/map/kakaoLoader.ts) |
+| 입력 조건이 바뀌어도 이전 계산 결과가 남을 수 있음 | reducer에서 입력 변경과 결과·오류 초기화를 함께 처리 | [상태 전이](src/features/planner/model/plannerReducer.ts) |
+| 자동완성을 키보드나 한글 조합 중에 사용하기 어려움 | ARIA combobox, 방향키·Enter·Escape, IME 조합 상태 처리 | [역 검색 입력](src/features/planner/ui/DepartureField.tsx) |
+| 지도 SDK 오류가 핵심 기능까지 막을 수 있음 | 계산과 지도 표시를 분리하고 로딩·키 누락·오류 상태 제공 | [지도 연동](src/features/map/ui/KakaoMap.tsx) · [SDK 로더](src/features/map/api/kakaoLoader.ts) |
 
 ## 사용자 흐름
 
@@ -64,7 +64,7 @@ flowchart LR
 | [src/data/subway/](src/data/subway) | 생성된 역·운행 구간 데이터, 노선 색과 데이터 검증 |
 | [src/features/planner/](src/features/planner) | 출발역 입력, reducer 상태 관리, 결과 카드 |
 | [src/features/map/](src/features/map) | 지도 SDK 로더·타입, 마커·경로 표시 |
-| [src/components/](src/components) · [src/styles/](src/styles) | 공통 UI, 디자인 토큰, 반응형 레이아웃 |
+| [src/shared/ui/](src/shared/ui) · [src/app/styles/](src/app/styles) | 공통 UI, 디자인 토큰, 반응형 레이아웃 |
 | [scripts/](scripts) · [.github/workflows/](.github/workflows) | 데이터 생성과 CI·배포 |
 
 ## 로컬 실행
@@ -85,7 +85,7 @@ npm run dev
 npm run check
 ```
 
-ESLint → TypeScript 검사 → Vitest → Vite 빌드를 실행합니다. 테스트는 그래프·최단경로·후보 계산, 생성 데이터, 검색, reducer와 표시 형식을 대상으로 합니다.
+ESLint → TypeScript 검사 → Vitest → 문서 링크 검사 → Vite 빌드를 실행합니다. 테스트는 그래프·최단경로·후보 계산, 생성 데이터, 검색, reducer와 표시 형식을 대상으로 합니다.
 
 PR과 dev·main push에서는 [CI](.github/workflows/ci.yml)가 운영 하위 경로 빌드까지 검사합니다. 키보드 조작, 모바일 화면과 실제 지도 SDK 동작은 [수동 확인 항목](docs/DEVELOPMENT.md#검증)으로 별도 확인합니다.
 
@@ -101,6 +101,8 @@ PR과 dev·main push에서는 [CI](.github/workflows/ci.yml)가 운영 하위 �
 
 | 목적 | 문서 |
 | --- | --- |
+| 폴더별 책임과 의존 관계 이해 | [아키텍처](docs/ARCHITECTURE.md) |
+| 변경 제안과 개발 참여 | [기여 안내](CONTRIBUTING.md) |
 | 계산 기준, 데이터 모델, 상태 관리와 검증 이해 | [개발 가이드](docs/DEVELOPMENT.md) |
 | 지도 설정, 개발·운영 배포와 장애 확인 | [운영·배포](docs/OPERATIONS.md) |
 

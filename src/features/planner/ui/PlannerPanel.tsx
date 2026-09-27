@@ -1,10 +1,10 @@
 import { stationCatalog } from '@/data/subway';
-import { Button } from '@/components/Button/Button';
-import { Icon } from '@/components/Icon';
+import { Button } from '@/shared/ui/Button/Button';
+import { Icon } from '@/shared/ui/Icon';
 import { DepartureField } from './DepartureField';
-import { MAX_DEPARTURES } from './plannerReducer';
+import { MAX_DEPARTURES } from '../model/plannerReducer';
 import { ResultCard } from './ResultCard';
-import type { Planner } from './usePlanner';
+import type { Planner } from '../model/usePlanner';
 import styles from './PlannerPanel.module.css';
 
 // dev 브랜치 미리보기 빌드(`--mode pages-dev`)에서만 표시를 붙인다

@@ -2,7 +2,7 @@
 
 [프로젝트 소개](../README.md) · [운영·배포](OPERATIONS.md)
 
-계산 기준, 데이터 구조와 화면 상태를 코드와 함께 설명합니다. 문서 기준은 2026-09-27입니다.
+계산 기준, 데이터 구조와 화면 상태를 코드와 함께 설명합니다. 문서 기준은 2026-09-27입니다. 폴더별 책임과 의존 관계는 [아키텍처](ARCHITECTURE.md)를 참고하세요.
 
 ## 계산 흐름
 
@@ -60,14 +60,14 @@ npm test
 
 ## 화면 상태와 접근성
 
-계산은 `domain/subway`, 데이터는 `data/subway`, 화면은 `features`로 분리합니다. [usePlanner](../src/features/planner/usePlanner.ts)가 계산과 화면 상태를 연결합니다.
+계산은 `domain/subway`, 데이터는 `data/subway`, 화면은 `features`로 분리합니다. [usePlanner](../src/features/planner/model/usePlanner.ts)가 계산과 화면 상태를 연결합니다.
 
-- [reducer](../src/features/planner/plannerReducer.ts)는 출발지 추가·삭제·입력·선택·후보 변경을 처리합니다. 입력 조건이 바뀌면 결과와 오류를 초기화합니다.
+- [reducer](../src/features/planner/model/plannerReducer.ts)는 출발지 추가·삭제·입력·선택·후보 변경을 처리합니다. 입력 조건이 바뀌면 결과와 오류를 초기화합니다.
 - 출발지는 최소 2칸, 최대 6칸입니다. 선택된 서로 다른 역이 2곳 이상일 때 계산할 수 있습니다.
-- [검색 입력](../src/features/planner/DepartureField.tsx)은 combobox·listbox·option과 ARIA 상태를 사용합니다. 방향키, Enter, Escape를 지원하며 한글 조합 중 Enter는 역 선택으로 처리하지 않습니다.
+- [검색 입력](../src/features/planner/ui/DepartureField.tsx)은 combobox·listbox·option과 ARIA 상태를 사용합니다. 방향키, Enter, Escape를 지원하며 한글 조합 중 Enter는 역 선택으로 처리하지 않습니다.
 - 검색어 강조는 문자열을 분리한 React 요소로 표현합니다. 사용자 검색어를 HTML로 삽입하지 않습니다.
-- [표시 함수](../src/lib/format.ts)는 유효하지 않은 시간·환승 값을 `—`로 표시합니다.
-- [지도 로더](../src/features/map/kakaoLoader.ts)는 공유 Promise로 SDK 로딩 요청을 모읍니다. 지도 표시 실패와 중간지점 계산은 별도 흐름입니다.
+- [표시 함수](../src/shared/lib/format.ts)는 유효하지 않은 시간·환승 값을 `—`로 표시합니다.
+- [지도 로더](../src/features/map/api/kakaoLoader.ts)는 공유 Promise로 SDK 로딩 요청을 모읍니다. 지도 표시 실패와 중간지점 계산은 별도 흐름입니다.
 
 ## 검증
 
@@ -77,7 +77,8 @@ npm test
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest 단위·회귀 테스트 |
 | `npm run build` | 타입 검사 후 루트 경로 Vite 빌드 |
-| `npm run check` | lint·타입·테스트·루트 경로 빌드 |
+| `npm run docs:check` | Markdown 상대 파일 링크·코드 블록 검사 |
+| `npm run check` | lint·타입·테스트·문서 링크·루트 경로 빌드 |
 | `npx vite build --mode pages` | `/subway-midpoint/` 운영 경로 빌드 |
 | `npx vite build --mode pages-dev` | `/subway-midpoint/dev/` 미리보기 경로 빌드 |
 

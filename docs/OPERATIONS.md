@@ -27,13 +27,13 @@ GitHub Actions에서는 저장소 변수 `KAKAO_MAP_KEY`를 빌드 환경변수 
 
 ## CI와 배포 흐름
 
-[CI](../.github/workflows/ci.yml)는 PR과 dev·main push에서 lint, 타입 검사, 테스트와 운영 경로 빌드를 실행합니다.
+[CI](../.github/workflows/ci.yml)는 PR과 dev·main push에서 문서 링크, lint, 타입 검사, 테스트와 운영 경로 빌드를 실행합니다.
 
 [배포 워크플로](../.github/workflows/deploy.yml)는 dev·main push 또는 수동 실행으로 시작합니다. **CI와 별도 워크플로**이며, 배포 빌드 자체에도 타입 검사와 테스트가 들어 있습니다. 별도 CI의 성공을 기다리는 의존 관계는 설정되어 있지 않습니다.
 
 ```mermaid
 flowchart TD
-    Push["dev 또는 main push"] --> CI["CI: lint · 타입 · 테스트 · 빌드"]
+    Push["dev 또는 main push"] --> CI["CI: 문서 · lint · 타입 · 테스트 · 빌드"]
     Push --> Checkout["배포: main · dev 체크아웃"]
     Checkout --> Main["main 타입 검사 · 테스트 · pages 빌드"]
     Checkout --> Dev["dev 타입 검사 · 테스트 · pages-dev 빌드"]

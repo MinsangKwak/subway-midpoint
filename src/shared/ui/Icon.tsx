@@ -18,7 +18,7 @@ type Props = SVGProps<SVGSVGElement> & {
   size?: number;
 };
 
-// 아이콘 라이브러리 대신 필요한 8개만 인라인 SVG로 둔다. 번들 130KB 절감.
+// 사용하는 아이콘 8개를 인라인 SVG로 정의한다.
 export const Icon = ({ name, size = 18, ...rest }: Props) => (
   <svg
     width={size}
