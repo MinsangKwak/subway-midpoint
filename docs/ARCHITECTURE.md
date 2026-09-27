@@ -1,6 +1,6 @@
 # 아키텍처
 
-[프로젝트 소개](../README.md) · [개발 가이드](DEVELOPMENT.md) · [문서 목록](README.md)
+[프로젝트 소개](PROJECT.md) · [개발 가이드](DEVELOPMENT.md) · [문서 목록](README.md)
 
 계산 엔진, 생성 데이터, 사용자 기능과 공통 UI의 책임을 나눕니다. 작은 React 앱 규모에 맞춰 기능과 가까운 위치에 코드·스타일·테스트를 둡니다.
 
@@ -9,7 +9,7 @@
 ```text
 subway-midpoint/
 ├── .github/                 CI·배포, 이슈·PR 템플릿
-├── docs/                    구조·개발·운영 문서
+├── docs/                    소개·구조·개발·운영·기여 문서
 ├── scripts/                 데이터 생성·문서 검증 도구
 ├── src/
 │   ├── app/                 앱 조립과 전역 스타일
@@ -28,8 +28,7 @@ subway-midpoint/
 │   │   ├── ui/             기능에 의존하지 않는 버튼·아이콘
 │   │   └── lib/            표시 형식 등 독립 유틸리티
 │   └── main.tsx            React 진입점
-├── CONTRIBUTING.md          개발·검증·PR 기준
-└── README.md                프로젝트 소개와 탐색 시작점
+└── README.md                서비스·문서 진입점
 ```
 
 | 새로 추가하는 내용 | 위치 | 이유 |
