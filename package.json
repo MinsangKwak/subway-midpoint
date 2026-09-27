@@ -13,8 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run lint && npm run typecheck && npm run test && vite build",
-    "data:stations": "node scripts/fetch-stations.mjs"
+    "check": "npm run lint && npm run typecheck && npm test && npm run docs:check && npm run build",
+    "data:stations": "node scripts/fetch-stations.mjs",
+    "docs:check": "node scripts/check-docs.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",

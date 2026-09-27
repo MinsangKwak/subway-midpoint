@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { KakaoMap, type MapMarker, type MapRoute } from '@/features/map/KakaoMap';
-import { PlannerPanel } from '@/features/planner/PlannerPanel';
-import { usePlanner } from '@/features/planner/usePlanner';
-import { Icon } from '@/components/Icon';
+import { KakaoMap, type MapMarker, type MapRoute } from '@/features/map/ui/KakaoMap';
+import { PlannerPanel } from '@/features/planner/ui/PlannerPanel';
+import { usePlanner } from '@/features/planner/model/usePlanner';
+import { Icon } from '@/shared/ui/Icon';
 
 const MOBILE_QUERY = '(max-width: 720px)';
 

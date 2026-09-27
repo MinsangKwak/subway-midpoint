@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { lineById, subwayGraph } from '@/data/subway';
 import type { MidpointCandidate, MidpointResult } from '@/domain/subway/midpoint';
-import { formatLineNames, formatMinutes, formatTransfers } from '@/lib/format';
-import { Icon } from '@/components/Icon';
-import { IconButton } from '@/components/Button/Button';
-import { LineBadges } from '@/components/LineBadge/LineBadge';
-import type { Departure } from './plannerReducer';
+import { formatLineNames, formatMinutes, formatTransfers } from '@/shared/lib/format';
+import { Icon } from '@/shared/ui/Icon';
+import { IconButton } from '@/shared/ui/Button/Button';
+import { LineBadges } from '@/features/planner/ui/LineBadge/LineBadge';
+import type { Departure } from '../model/plannerReducer';
 import styles from './ResultCard.module.css';
 
 type Props = {

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LatLng } from '@/domain/subway/types';
-import { Icon } from '@/components/Icon';
-import { IconButton } from '@/components/Button/Button';
-import { loadKakaoMaps, type KakaoMaps } from './kakaoLoader';
+import { Icon } from '@/shared/ui/Icon';
+import { IconButton } from '@/shared/ui/Button/Button';
+import { loadKakaoMaps, type KakaoMaps } from '../api/kakaoLoader';
 import styles from './KakaoMap.module.css';
 
 export type MapMarker = {
