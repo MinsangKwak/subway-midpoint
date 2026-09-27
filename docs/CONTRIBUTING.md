@@ -1,6 +1,6 @@
 # 기여 안내
 
-[프로젝트 소개](README.md) · [아키텍처](docs/ARCHITECTURE.md) · [개발 가이드](docs/DEVELOPMENT.md)
+[프로젝트 소개](PROJECT.md) · [아키텍처](ARCHITECTURE.md) · [개발 가이드](DEVELOPMENT.md)
 
 ## 시작하기
 
@@ -12,7 +12,7 @@ cp .env.example .env
 npm run dev
 ```
 
-지도 키 없이도 검색·계산을 검토할 수 있습니다. 지도 설정은 [운영 문서](docs/OPERATIONS.md#지도-설정)를 참고하세요.
+지도 키 없이도 검색·계산을 검토할 수 있습니다. 지도 설정은 [운영 문서](OPERATIONS.md#지도-설정)를 참고하세요.
 
 ## 변경 흐름
 
@@ -26,7 +26,7 @@ npm run dev
 
 ## 코드와 데이터 규칙
 
-- 새 파일의 위치는 [폴더별 책임](docs/ARCHITECTURE.md#폴더별-책임)에 따라 정합니다.
+- 새 파일의 위치는 [폴더별 책임](ARCHITECTURE.md#폴더별-책임)에 따라 정합니다.
 - 컴포넌트와 CSS Modules, 순수 로직과 테스트는 관련 코드 가까이에 둡니다.
 - import는 실제 구현 파일을 직접 가리킵니다. 단순 재수출을 위한 index 파일을 늘리지 않습니다.
 - `src/data/subway/stations.ts`는 생성 파일입니다. 생성 스크립트를 수정한 뒤 다시 생성하고 데이터 회귀 테스트를 확인합니다.
@@ -37,4 +37,4 @@ npm run dev
 
 `npm run check`는 lint, 타입, 테스트, 문서 링크, 빌드를 검사합니다. 화면 변경은 자동 검사에 더해 키보드·한글 입력·후보 전환·모바일 화면을 확인합니다. 지도와 데이터 외부 서비스에 접근하지 못했다면 검증 범위를 PR에 명시합니다.
 
-실행 가능한 개별 명령과 회귀 사례는 [개발 가이드](docs/DEVELOPMENT.md#검증)에 정리되어 있습니다.
+실행 가능한 개별 명령과 회귀 사례는 [개발 가이드](DEVELOPMENT.md#검증)에 정리되어 있습니다.

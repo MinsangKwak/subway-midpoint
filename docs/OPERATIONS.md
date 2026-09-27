@@ -1,6 +1,6 @@
 # 운영·배포
 
-[프로젝트 소개](../README.md) · [개발 가이드](DEVELOPMENT.md)
+[프로젝트 소개](PROJECT.md) · [개발 가이드](DEVELOPMENT.md)
 
 GitHub Pages에 운영과 개발 미리보기를 함께 배포합니다. 문서 기준은 2026-09-27입니다.
 
