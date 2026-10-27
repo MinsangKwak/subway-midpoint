@@ -7,4 +7,4 @@ import { LINE_SEGMENTS, RAW_STATIONS } from './stations';
 export const subwayGraph = buildSubwayGraph(RAW_STATIONS, LINE_SEGMENTS);
 export const stationCatalog = buildStationCatalog(RAW_STATIONS, SUBWAY_LINES);
 
-export { SUBWAY_LINES, lineById } from './lines';
+export { SUBWAY_LINES, lineById, linesOf } from './lines';
