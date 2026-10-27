@@ -23,7 +23,7 @@ npm run dev
 
 출발역 자체와 모든 출발지에서 도달할 수 없는 역은 후보에서 제외합니다. 기본 반환값은 상위 3개이며 추천역도 이 목록에 포함합니다. 동일 출발역은 계산 함수에서 중복 제거하고 UI에서도 중복 선택을 제한합니다.
 
-[calculateMidpoint](../src/domain/subway/midpoint.ts)는 각 출발지의 다익스트라 결과를 만든 뒤 후보별 도착 노드를 비교합니다. 현재 구현은 후보마다 경로를 복원한 다음 전체 후보를 정렬하고 상위 3개를 반환합니다.
+[calculateMidpoint](../src/domain/subway/midpoint.ts)는 각 출발지의 다익스트라 결과를 만든 뒤 후보별 도착 노드와 최대·합계 시간만 모아 정렬합니다. 경로 복원과 좌표 변환은 상위 N개 후보에만 수행합니다. 후보의 표시 이름은 같은 역의 노선별 이름 중 가장 짧은 것(카탈로그와 같은 규칙), 노선 목록은 역 키로 묶인 모든 노드의 노선입니다.
 
 ## 그래프와 시간 가중치
 
@@ -52,21 +52,24 @@ node scripts/fetch-stations.mjs --cached
 npm test
 ```
 
-두 번째 명령은 원본 캐시 `.cache/overpass-lines-1-9.json`을 재사용합니다. 캐시가 없으면 새로 요청합니다. 최초 수집에는 네트워크가 필요하고 실패하면 다른 Overpass 서버로 재시도합니다.
+두 번째 명령은 원본 캐시 `.cache/overpass-lines.json`을 재사용합니다. 캐시가 없으면 새로 요청합니다. 최초 수집에는 네트워크가 필요하고 실패하면 다른 Overpass 서버로 재시도합니다.
 
 | 원본 조건 | 정제 방법 |
 |---|---|
-| `route=subway`, ref 1~9 | 관계의 정차 순서로 운행 구간 생성 |
-| 급행·특급 | 정차역을 건너뛰는 간선을 막기 위해 제외 |
+| `route=subway` ref 1~9, `route=train` ref 경의·중앙/수인·분당/신분당/공항철도 | 관계의 정차 순서로 운행 구간 생성 |
+| 급행·특급·직통 | 정차역을 건너뛰는 간선을 막기 위해 제외 |
 | 괄호 부기 | 표시 이름에서 제거하고 원래 이름을 검색 별칭으로 보존 |
 | 같은 노선의 중복 역 | 정규화 이름으로 통합, 연속 중복 정차 노드 정리 |
-| 이름이 다른 환승역 | `transferName`으로 묶음 지정 |
+| 이름이 다른 환승역 | `transferName`으로 묶음 지정 (총신대입구 → 이수) |
+| 이름만 같은 다른 역 | 노선별 다른 키를 `transferName`에 지정해 분리 (경의중앙선 신촌·양평). 같은 키의 노드가 800m 이상 떨어지면 스크립트가 경고 |
 
-[데이터 테스트](../src/data/subway/stations.test.ts)는 노선 범위·중복·좌표·참조·종점·주요 환승 묶음을 확인합니다. 갱신 후 실패하면 실제 노선 변화인지 원본 누락인지 먼저 확인합니다. 출처와 ODbL 조건은 [OpenStreetMap 저작권 안내](https://www.openstreetmap.org/copyright)에서 확인합니다.
+[데이터 테스트](../src/data/subway/stations.test.ts)는 노선 범위·중복·좌표·참조·종점·주요 환승 묶음·동명이역 분리·환승 묶음 거리·새 노선 연결을 확인합니다. 노선 id와 색·배지 글자는 [lines.ts](../src/data/subway/lines.ts)에 두며, 번호가 아닌 노선은 짧은 이름 배지로 표시합니다. 갱신 후 실패하면 실제 노선 변화인지 원본 누락인지 먼저 확인합니다. 출처와 ODbL 조건은 [OpenStreetMap 저작권 안내](https://www.openstreetmap.org/copyright)에서 확인합니다.
 
 ## React 상태와 검색
 
 [usePlanner](../src/features/planner/model/usePlanner.ts)가 계산과 reducer를 연결합니다. 입력칸은 2~6개이며 서로 다른 역이 2곳 이상 선택되면 계산할 수 있습니다. 나머지 입력칸이 비어 있어도 선택한 역을 기준으로 계산합니다.
+
+처음 열 때 주소에 `?from=`이 있으면 [urlState](../src/features/planner/model/urlState.ts)로 출발역을 복원하고, 2곳 이상이면 계산까지 마친 상태로 시작합니다. 결과가 있는 동안에는 출발역과 선택 후보를 `history.replaceState`로 주소에 반영하고, 결과가 사라지면 쿼리도 지웁니다.
 
 | 조작 | 상태 변화 |
 |---|---|
@@ -77,7 +80,7 @@ npm test
 
 [DepartureField](../src/features/planner/ui/DepartureField.tsx)는 combobox·listbox·option과 ARIA 상태를 사용합니다. 방향키·Enter·Escape를 처리하고 한글 조합 중에는 선택 처리를 건너뜁니다. 검색어 강조는 HTML 삽입 없이 문자열을 React 요소로 나눕니다.
 
-[ResultCard](../src/features/planner/ui/ResultCard.tsx)의 공유 버튼은 Web Share API가 있으면 공유 시트를, 없으면 클립보드를 사용합니다. 현재는 텍스트 공유이며 URL 복원은 제공하지 않습니다.
+[ResultCard](../src/features/planner/ui/ResultCard.tsx)의 공유 버튼은 Web Share API가 있으면 공유 시트를, 없으면 클립보드를 사용합니다. 결과 텍스트와 함께 같은 조건으로 열리는 주소를 전달합니다. 후보 칩은 ARIA 탭 패턴을 따라 선택된 칩만 Tab 순서에 두고 방향키·Home·End로 옮깁니다.
 
 ## 검증
 
@@ -86,7 +89,8 @@ npm test
 | `npm run check` | lint·타입·테스트·문서 링크·루트 빌드 |
 | `npm run docs:check` | Markdown 상대 파일 링크·닫힌 코드 블록 |
 | `npm test` | Node 환경의 `.test.ts` 단위·회귀 테스트 |
+| `npm run test:e2e` | 지도 키 없는 빌드를 preview 서버로 띄워 Playwright로 검색·계산·후보·주소 복원·공유·모바일 패널 확인 |
 | `npx vite build --mode pages` | 운영 `/subway-midpoint/` 경로 빌드 |
 | `npx vite build --mode pages-dev` | 개발 `/subway-midpoint/dev/` 경로 빌드 |
 
-브라우저에서는 키보드·한글 IME, 후보 전환, 조건 변경 후 결과 초기화, 모바일 패널, 테마와 지도 실패 상태를 확인합니다. 자동 검사와 브라우저 확인의 실제 실행 범위는 [검증 기록](VALIDATION.md)을 기준으로 읽습니다.
+Playwright 테스트는 [e2e/](../e2e/)에 있고 설정은 [playwright.config.ts](../playwright.config.ts)입니다. 처음 실행하는 환경에서는 `npx playwright install chromium`으로 브라우저를 받습니다. 실제 한글 IME 조합, 시스템 테마, 지도 키가 있는 렌더링은 수동으로 확인합니다. 실행 범위는 [검증 기록](VALIDATION.md)을 기준으로 읽습니다.
