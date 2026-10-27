@@ -13,5 +13,10 @@ export const formatTransfers = (count: number | null | undefined): string => {
   return count === 0 ? '환승 없음' : `환승 ${count}회`;
 };
 
-export const formatLineNames = (lineIds: string[]): string =>
-  lineIds.length === 0 ? '—' : `${lineIds.join('·')}호선`;
+// 번호 노선은 "1·3·5호선"으로 묶고, 이름 노선은 이름을 그대로 잇는다 (예: 1·4호선·공항철도)
+export const formatLineNames = (lines: { id: string; name: string }[]): string => {
+  if (lines.length === 0) return '—';
+  const numbered = lines.filter((l) => /^\d+$/.test(l.id)).map((l) => l.id);
+  const named = lines.filter((l) => !/^\d+$/.test(l.id)).map((l) => l.name);
+  return [numbered.length ? `${numbered.join('·')}호선` : '', ...named].filter(Boolean).join('·');
+};

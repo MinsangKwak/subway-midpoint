@@ -1,95 +1,96 @@
-# 개발 가이드
+# 개발 가이드 · 실행부터 계산 규칙까지
 
-[프로젝트 소개](PROJECT.md) · [운영·배포](OPERATIONS.md)
+[저장소 홈](../README.md) · [구조](STRUCTURE.md) · [운영](OPERATIONS.md) · [검증 기록](VALIDATION.md)
 
-계산 기준, 데이터 구조와 화면 상태를 코드와 함께 설명합니다. 문서 기준은 2026-09-27입니다. 폴더별 책임과 의존 관계는 [아키텍처](ARCHITECTURE.md)를 참고하세요.
+## 로컬 실행
 
-## 계산 흐름
+Node.js 22 이상에서 저장소 루트 기준으로 실행합니다.
 
-1. 선택한 역을 노선별 노드 ID 묶음으로 변환합니다.
-2. 각 출발지에서 다익스트라로 모든 노드까지의 최단 예상 시간을 계산합니다.
-3. 모든 출발지에서 도달할 수 있는 역을 후보로 모읍니다. 출발역 자체는 제외합니다.
-4. 최대 예상 시간 → 전체 시간 합계 → 역 이름순으로 정렬합니다.
-5. 상위 3개 후보의 경로를 복원하고 시간·환승 횟수·좌표를 결과로 반환합니다.
+```bash
+npm ci
+npm run dev
+```
 
-예를 들어 두 후보의 예상 시간이 각각 `20분·40분`, `32분·32분`이라면 최댓값이 더 작은 두 번째 후보를 먼저 추천합니다. 합계보다 가장 오래 이동하는 사람의 부담을 우선하는 **minimax** 기준입니다.
+[로컬 앱](http://localhost:5173/)에서 출발역을 선택하고 계산합니다. 지도 키가 없어도 검색과 결과 카드는 사용할 수 있습니다. 지도 설정은 [운영 가이드](OPERATIONS.md#지도-설정)를 참고하세요.
 
-구현: [midpoint.ts](../src/domain/subway/midpoint.ts)
+## 계산 기준
+
+각 후보를 아래 순서로 비교합니다.
+
+1. 출발지별 최단 예상 시간의 **최댓값**이 작은 역
+2. 최댓값이 같으면 **전체 시간 합계**가 작은 역
+3. 둘 다 같으면 **한국어 역 이름순**
+
+출발역 자체와 모든 출발지에서 도달할 수 없는 역은 후보에서 제외합니다. 기본 반환값은 상위 3개이며 추천역도 이 목록에 포함합니다. 동일 출발역은 계산 함수에서 중복 제거하고 UI에서도 중복 선택을 제한합니다.
+
+[calculateMidpoint](../src/domain/subway/midpoint.ts)는 각 출발지의 다익스트라 결과를 만든 뒤 후보별 도착 노드와 최대·합계 시간만 모아 정렬합니다. 경로 복원과 좌표 변환은 상위 N개 후보에만 수행합니다. 후보의 표시 이름은 같은 역의 노선별 이름 중 가장 짧은 것(카탈로그와 같은 규칙), 노선 목록은 역 키로 묶인 모든 노드의 노선입니다.
 
 ## 그래프와 시간 가중치
 
-| 요소 | 표현과 역할 |
-| --- | --- |
-| 역 노드 | 같은 환승역이라도 노선별 노드 유지 |
-| 운행 구간 | `LINE_SEGMENTS`의 인접 역을 양방향으로 연결. 분기를 별도 구간으로 표현 |
-| 순환 | 구간의 `loop`가 지정되면 끝과 시작을 연결. 생성 데이터는 원본 정차 순서의 연결을 사용 |
-| 환승 간선 | 정규화된 역 이름 또는 `transferName`으로 묶인 서로 다른 노선 연결 |
-| 이동 비용 | `max(1.5, haversine 거리(km) / 32 × 60)`분 |
-| 환승 비용 | 노선 변경당 5분 |
+| 요소 | 현재 구현 |
+|---|---|
+| 역 노드 | 환승역도 노선별 노드로 유지 |
+| 운행 간선 | 같은 구간에서 이웃한 역을 양방향 연결 |
+| 순환 | 구간에 `loop`가 있으면 끝과 시작 연결; 생성 데이터는 원본 정차 순서도 사용 |
+| 환승 간선 | 정규화 이름 또는 `transferName`으로 묶인 다른 노선 연결 |
+| 역 간 시간 | `max(1.5, haversine 거리(km) / 32 × 60)`분 |
+| 환승 시간 | 노선 변경당 5분 |
 
-그래프 생성 시 중복 노드 ID, 존재하지 않는 역 참조, 구간과 다른 노선의 역을 검사합니다. 입력 배열의 정렬 순서가 노선 연결을 결정하지 않습니다.
+그래프 생성 시 중복 ID, 없는 역 참조, 구간과 다른 노선의 역을 검사합니다. 총신대입구·이수처럼 이름이 다른 환승역은 `transferName`으로 연결합니다.
 
-다익스트라는 이진 최소 힙을 사용하며, 이미 더 짧은 경로가 발견된 오래된 힙 항목은 건너뜁니다. 환승역 출발 시 모든 노선 노드를 비용 0의 출발점으로 넣어 첫 노선 선택에 환승 비용을 부과하지 않습니다. 후보에 도착할 때도 해당 역의 노드 중 가장 빨리 도달하는 노드를 선택합니다.
+[다익스트라](../src/domain/subway/dijkstra.ts)는 이진 최소 힙을 사용합니다. 환승역의 모든 노선 노드를 비용 0으로 시작해 첫 노선 선택에는 환승 비용을 붙이지 않습니다. 이미 더 짧은 경로가 발견된 힙 항목은 건너뜁니다.
 
-구현: [graph.ts](../src/domain/subway/graph.ts) · [dijkstra.ts](../src/domain/subway/dijkstra.ts) · [geo.ts](../src/domain/subway/geo.ts)
+실제 시각표·열차 대기·역별 환승 동선을 반영한 시간은 아닙니다. 이 모델 안에서의 최단 예상 시간을 비교합니다.
 
 ## 역 데이터
 
-[stations.ts](../src/data/subway/stations.ts)는 생성 파일입니다. 데이터를 바꿀 때는 [생성 스크립트](../scripts/fetch-stations.mjs)의 정제 규칙을 수정하고 다시 생성합니다.
+[stations.ts](../src/data/subway/stations.ts)는 [생성 스크립트](../scripts/fetch-stations.mjs)의 결과입니다. 데이터 갱신은 생성 규칙을 수정한 뒤 재생성합니다.
 
 ```bash
 npm run data:stations
-# 마지막으로 받은 원본 응답을 재사용할 때
 node scripts/fetch-stations.mjs --cached
 npm test
 ```
 
-캐시는 `.cache/overpass-lines-1-9.json`에 저장합니다. 캐시가 없으면 `--cached`를 사용해도 새로 요청합니다. 최초 수집에는 네트워크가 필요하며, 실패 시 다른 Overpass 서버로 재시도합니다.
+두 번째 명령은 원본 캐시 `.cache/overpass-lines.json`을 재사용합니다. 캐시가 없으면 새로 요청합니다. 최초 수집에는 네트워크가 필요하고 실패하면 다른 Overpass 서버로 재시도합니다.
 
-| 원본 데이터의 조건 | 정제 방식 |
-| --- | --- |
-| 노선별 운행 순서 | OSM `route=subway`, ref 1~9 관계의 정차 순서로 구간 생성 |
-| 급행·특급 관계 | 일반 노선에 정차역을 건너뛰는 간선이 생기지 않도록 제외 |
-| 괄호가 붙은 역 이름 | 표시 이름에서는 부기를 제거하고 원래 표기는 검색 별칭으로 보존 |
-| 같은 노선의 중복 역 | 정규화 이름으로 통합하고 연속된 중복 정차 노드는 한 번만 반영 |
-| 총신대입구·이수 | `transferName`으로 환승 묶음 구성 |
+| 원본 조건 | 정제 방법 |
+|---|---|
+| `route=subway` ref 1~9, `route=train` ref 경의·중앙/수인·분당/신분당/공항철도 | 관계의 정차 순서로 운행 구간 생성 |
+| 급행·특급·직통 | 정차역을 건너뛰는 간선을 막기 위해 제외 |
+| 괄호 부기 | 표시 이름에서 제거하고 원래 이름을 검색 별칭으로 보존 |
+| 같은 노선의 중복 역 | 정규화 이름으로 통합, 연속 중복 정차 노드 정리 |
+| 이름이 다른 환승역 | `transferName`으로 묶음 지정 (총신대입구 → 이수) |
+| 이름만 같은 다른 역 | 노선별 다른 키를 `transferName`에 지정해 분리 (경의중앙선 신촌·양평). 같은 키의 노드가 800m 이상 떨어지면 스크립트가 경고 |
 
-생성 스크립트는 노선별 끝 역을 출력합니다. [데이터 테스트](../src/data/subway/stations.test.ts)는 노선 범위, 중복 이름, 좌표·참조 무결성, 종점과 주요 환승역을 검사합니다. 원본 갱신 후 실패하면 정답 목록부터 바꾸지 말고 실제 노선 변경인지 데이터 누락인지 먼저 확인합니다.
+[데이터 테스트](../src/data/subway/stations.test.ts)는 노선 범위·중복·좌표·참조·종점·주요 환승 묶음·동명이역 분리·환승 묶음 거리·새 노선 연결을 확인합니다. 노선 id와 색·배지 글자는 [lines.ts](../src/data/subway/lines.ts)에 두며, 번호가 아닌 노선은 짧은 이름 배지로 표시합니다. 갱신 후 실패하면 실제 노선 변화인지 원본 누락인지 먼저 확인합니다. 출처와 ODbL 조건은 [OpenStreetMap 저작권 안내](https://www.openstreetmap.org/copyright)에서 확인합니다.
 
-출처는 [OpenStreetMap](https://www.openstreetmap.org/copyright), 데이터 라이선스는 ODbL입니다. 화면의 기여자 표기를 유지하고 데이터 재배포 시 해당 이용 조건을 확인합니다.
+## React 상태와 검색
 
-## 화면 상태와 접근성
+[usePlanner](../src/features/planner/model/usePlanner.ts)가 계산과 reducer를 연결합니다. 입력칸은 2~6개이며 서로 다른 역이 2곳 이상 선택되면 계산할 수 있습니다. 나머지 입력칸이 비어 있어도 선택한 역을 기준으로 계산합니다.
 
-계산은 `domain/subway`, 데이터는 `data/subway`, 화면은 `features`로 분리합니다. [usePlanner](../src/features/planner/model/usePlanner.ts)가 계산과 화면 상태를 연결합니다.
+처음 열 때 주소에 `?from=`이 있으면 [urlState](../src/features/planner/model/urlState.ts)로 출발역을 복원하고, 2곳 이상이면 계산까지 마친 상태로 시작합니다. 결과가 있는 동안에는 출발역과 선택 후보를 `history.replaceState`로 주소에 반영하고, 결과가 사라지면 쿼리도 지웁니다.
 
-- [reducer](../src/features/planner/model/plannerReducer.ts)는 출발지 추가·삭제·입력·선택·후보 변경을 처리합니다. 입력 조건이 바뀌면 결과와 오류를 초기화합니다.
-- 출발지는 최소 2칸, 최대 6칸입니다. 선택된 서로 다른 역이 2곳 이상일 때 계산할 수 있습니다.
-- [검색 입력](../src/features/planner/ui/DepartureField.tsx)은 combobox·listbox·option과 ARIA 상태를 사용합니다. 방향키, Enter, Escape를 지원하며 한글 조합 중 Enter는 역 선택으로 처리하지 않습니다.
-- 검색어 강조는 문자열을 분리한 React 요소로 표현합니다. 사용자 검색어를 HTML로 삽입하지 않습니다.
-- [표시 함수](../src/shared/lib/format.ts)는 유효하지 않은 시간·환승 값을 `—`로 표시합니다.
-- [지도 로더](../src/features/map/api/kakaoLoader.ts)는 공유 Promise로 SDK 로딩 요청을 모읍니다. 지도 표시 실패와 중간지점 계산은 별도 흐름입니다.
+| 조작 | 상태 변화 |
+|---|---|
+| 출발지 추가·삭제·검색어 변경·선택·지우기 | 출발지 갱신, 결과·오류·선택 후보 초기화 |
+| 계산 성공 | 결과 저장, 첫 후보 선택 |
+| 계산 실패 | 결과 제거, 오류 저장 |
+| 후보 전환 | 결과를 유지하고 선택 인덱스 변경 |
+
+[DepartureField](../src/features/planner/ui/DepartureField.tsx)는 combobox·listbox·option과 ARIA 상태를 사용합니다. 방향키·Enter·Escape를 처리하고 한글 조합 중에는 선택 처리를 건너뜁니다. 검색어 강조는 HTML 삽입 없이 문자열을 React 요소로 나눕니다.
+
+[ResultCard](../src/features/planner/ui/ResultCard.tsx)의 공유 버튼은 Web Share API가 있으면 공유 시트를, 없으면 클립보드를 사용합니다. 결과 텍스트와 함께 같은 조건으로 열리는 주소를 전달합니다. 후보 칩은 ARIA 탭 패턴을 따라 선택된 칩만 Tab 순서에 두고 방향키·Home·End로 옮깁니다.
 
 ## 검증
 
 | 명령 | 확인 내용 |
-| --- | --- |
-| `npm run lint` | ESLint 9 flat config 기반 검사 |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Vitest 단위·회귀 테스트 |
-| `npm run build` | 타입 검사 후 루트 경로 Vite 빌드 |
-| `npm run docs:check` | Markdown 상대 파일 링크·코드 블록 검사 |
-| `npm run check` | lint·타입·테스트·문서 링크·루트 경로 빌드 |
-| `npx vite build --mode pages` | `/subway-midpoint/` 운영 경로 빌드 |
-| `npx vite build --mode pages-dev` | `/subway-midpoint/dev/` 미리보기 경로 빌드 |
+|---|---|
+| `npm run check` | lint·타입·테스트·문서 링크·루트 빌드 |
+| `npm run docs:check` | Markdown 상대 파일 링크·닫힌 코드 블록 |
+| `npm test` | Node 환경의 `.test.ts` 단위·회귀 테스트 |
+| `npm run test:e2e` | 지도 키 없는 빌드를 preview 서버로 띄워 Playwright로 검색·계산·후보·주소 복원·공유·모바일 패널 확인 |
+| `npx vite build --mode pages` | 운영 `/subway-midpoint/` 경로 빌드 |
+| `npx vite build --mode pages-dev` | 개발 `/subway-midpoint/dev/` 경로 빌드 |
 
-대표 회귀 사례는 의정부 경로가 가산디지털단지로 바로 연결되지 않고 구로를 거치는지, 환승역 출발 비용이 불필요하게 추가되지 않는지, 생성 데이터의 종점과 환승 묶음이 유지되는지입니다.
-
-브라우저에서는 다음 흐름을 별도로 확인합니다.
-
-1. 키보드와 한글 입력으로 역 검색·선택·지우기
-2. 출발지 추가·삭제와 입력 변경 후 이전 결과 초기화
-3. 후보 전환 시 시간·환승 횟수·지도 경로 동기화
-4. 모바일·데스크톱, 밝은·어두운 테마의 입력과 결과 가독성
-5. 지도 키 누락·SDK 실패 상태에서도 검색과 계산 사용
-
-현재 테스트 환경은 Node이며 `.test.ts`를 실행합니다. 단위 테스트 통과만으로 브라우저 접근성이나 지도 API 정상 동작까지 검증한 것으로 보지 않습니다.
+Playwright 테스트는 [e2e/](../e2e/)에 있고 설정은 [playwright.config.ts](../playwright.config.ts)입니다. 처음 실행하는 환경에서는 `npx playwright install chromium`으로 브라우저를 받습니다. 실제 한글 IME 조합, 시스템 테마, 지도 키가 있는 렌더링은 수동으로 확인합니다. 실행 범위는 [검증 기록](VALIDATION.md)을 기준으로 읽습니다.

@@ -23,8 +23,11 @@ describe('formatTransfers / formatLineNames', () => {
     expect(formatTransfers(2)).toBe('환승 2회');
     expect(formatTransfers(undefined)).toBe('—');
   });
-  it('joins line ids', () => {
-    expect(formatLineNames(['1', '3', '5'])).toBe('1·3·5호선');
+  it('groups numbered lines and appends named lines', () => {
+    const line = (id: string, name = `${id}호선`) => ({ id, name });
+    expect(formatLineNames([line('1'), line('3'), line('5')])).toBe('1·3·5호선');
+    expect(formatLineNames([line('1'), line('4'), line('공항철도', '공항철도')])).toBe('1·4호선·공항철도');
+    expect(formatLineNames([line('신분당', '신분당선')])).toBe('신분당선');
     expect(formatLineNames([])).toBe('—');
   });
 });

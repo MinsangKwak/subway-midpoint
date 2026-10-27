@@ -32,18 +32,18 @@ export type PlannerAction =
   | { type: 'reset' };
 
 let seq = 0;
-export const createDeparture = (): Departure => ({
+export const createDeparture = (station: Station | null = null): Departure => ({
   id: `dep-${++seq}-${Date.now().toString(36)}`,
-  query: '',
-  station: null,
+  query: station?.name ?? '',
+  station,
 });
 
-export const initialPlannerState = (): PlannerState => ({
-  departures: [createDeparture(), createDeparture()],
-  result: null,
-  selectedCandidate: 0,
-  error: null,
-});
+// 주소로 복원한 출발역이 있으면 그 역으로 채우고, 없어도 입력칸은 최소 2개를 둔다
+export const initialPlannerState = (stations: Station[] = []): PlannerState => {
+  const departures = stations.slice(0, MAX_DEPARTURES).map((s) => createDeparture(s));
+  while (departures.length < 2) departures.push(createDeparture());
+  return { departures, result: null, selectedCandidate: 0, error: null };
+};
 
 // 출발지가 바뀌면 이전 결과는 더 이상 맞지 않으므로 지운다
 const invalidate = (state: PlannerState): PlannerState => ({
