@@ -20,3 +20,24 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npx vite build --mode pages
+
+  e2e:
+    # 지도 키 없는 빌드를 preview 서버로 띄워 검색·계산·후보·공유·모바일 패널을 브라우저에서 확인한다
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
