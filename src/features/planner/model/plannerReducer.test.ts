@@ -18,6 +18,16 @@ describe('plannerReducer', () => {
     expect(selectedStations(s)).toHaveLength(0);
   });
 
+  it('fills departures from restored stations and still keeps at least two slots', () => {
+    const two = initialPlannerState([gangnam, hongdae]);
+    expect(two.departures.map((d) => d.station?.key)).toEqual(['강남', '홍대입구']);
+    expect(two.departures.map((d) => d.query)).toEqual(['강남', '홍대입구']);
+
+    const one = initialPlannerState([gangnam]);
+    expect(one.departures).toHaveLength(2);
+    expect(one.departures[1].station).toBeNull();
+  });
+
   it('caps departures and never drops below two', () => {
     let s = initialPlannerState();
     for (let i = 0; i < 10; i++) s = plannerReducer(s, { type: 'add' });

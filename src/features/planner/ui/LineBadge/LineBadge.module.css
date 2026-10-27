@@ -28,3 +28,18 @@
   height: 26px;
   font-size: 14px;
 }
+
+/* 이름 노선: 글자 수에 맞춰 가로로 늘어나는 알약 */
+.pill {
+  width: auto;
+  padding: 0 7px;
+  letter-spacing: -0.02em;
+}
+
+.pill.sm {
+  font-size: 11px;
+}
+
+.pill.md {
+  font-size: 12px;
+}
