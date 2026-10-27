@@ -4,6 +4,16 @@
 
 **계산 규칙 → 입력 데이터 → 사용자 기능 → 앱 조립** 순서로 읽으면 구조를 따라가기 쉽습니다. 기존 기능별 폴더를 유지하고 관련 코드·스타일·테스트를 가까이 둡니다.
 
+## 코드 검토 시작점
+
+| 관심 있는 역량 | 먼저 읽을 파일 | 이어서 볼 파일 |
+| --- | --- | --- |
+| 문제를 계산으로 구현 | [midpoint.ts](../src/domain/subway/midpoint.ts) | [midpoint.test.ts](../src/domain/subway/midpoint.test.ts) |
+| 데이터 품질 관리 | [stations.test.ts](../src/data/subway/stations.test.ts) | [fetch-stations.mjs](../scripts/fetch-stations.mjs) |
+| 화면 상태 설계 | [plannerReducer.ts](../src/features/planner/model/plannerReducer.ts) | [urlState.ts](../src/features/planner/model/urlState.ts) |
+| 입력·접근성 | [DepartureField.tsx](../src/features/planner/ui/DepartureField.tsx) | [planner.spec.ts](../e2e/planner.spec.ts) |
+| 외부 연동 실패 대응 | [kakaoLoader.ts](../src/features/map/api/kakaoLoader.ts) | [KakaoMap.tsx](../src/features/map/ui/KakaoMap.tsx) |
+
 ## 폴더별 역할
 
 | 경로 | 담고 있는 내용 | 읽기 시작할 파일 |

@@ -9,6 +9,15 @@
 | main | [운영 서비스](https://minsangkwak.github.io/subway-midpoint/) | `pages` |
 | dev | [개발 미리보기](https://minsangkwak.github.io/subway-midpoint/dev/) | `pages-dev` |
 
+## 운영에서 확인할 핵심
+
+| 확인 항목 | 구현 방식 | 검토 근거 |
+| --- | --- | --- |
+| 운영·개발 환경 분리 | main과 dev를 각각 빌드해 경로별 배치 | 아래 브랜치·빌드 모드와 배포 흐름 |
+| 외부 지도 오류 대응 | 키·SDK 실패를 계산 상태와 분리 | 지도 없이도 검색·결과 비교 가능 |
+| 회귀 검사 | 단위 검사와 브라우저 검사를 별도 job으로 실행 | [검증 기록](VALIDATION.md) |
+| 배포 판단 | 배포 내부 검사와 별도 CI 결과를 각각 확인 | CI 성공을 기다리는 배포 게이트는 미설정 |
+
 ## 지도 설정
 
 로컬에서는 `.env.example`을 `.env`로 복사하고 `VITE_KAKAO_MAP_KEY`에 Kakao JavaScript 키를 넣습니다. GitHub Actions는 저장소 변수 `KAKAO_MAP_KEY`를 빌드 환경변수 `VITE_KAKAO_MAP_KEY`로 전달합니다.

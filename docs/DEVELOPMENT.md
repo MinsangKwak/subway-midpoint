@@ -2,6 +2,8 @@
 
 [저장소 홈](../README.md) · [구조](STRUCTURE.md) · [운영](OPERATIONS.md) · [검증 기록](VALIDATION.md)
 
+**추천 결과를 재현하고 계산·데이터·화면 상태의 규칙을 확인하는 문서입니다.** 설계 이유는 [프로젝트 설명](PROJECT.md), 실행 결과는 [검증 기록](VALIDATION.md)에서 이어집니다.
+
 ## 로컬 실행
 
 Node.js 22 이상에서 저장소 루트 기준으로 실행합니다.
@@ -12,6 +14,16 @@ npm run dev
 ```
 
 [로컬 앱](http://localhost:5173/)에서 출발역을 선택하고 계산합니다. 지도 키가 없어도 검색과 결과 카드는 사용할 수 있습니다. 지도 설정은 [운영 가이드](OPERATIONS.md#지도-설정)를 참고하세요.
+
+## 구현을 읽는 순서
+
+| 단계 | 파일 | 검토할 내용 |
+| --- | --- | --- |
+| 입력 조건 | [usePlanner](../src/features/planner/model/usePlanner.ts) | 선택 역과 계산 호출, URL 초기 상태 |
+| 그래프 | [graph](../src/domain/subway/graph.ts) | 노선 구간과 환승 간선 |
+| 최단경로 | [dijkstra](../src/domain/subway/dijkstra.ts) | 출발지별 탐색과 첫 노선 선택 |
+| 후보 | [midpoint](../src/domain/subway/midpoint.ts) | 점수 정렬 후 상위 후보 경로 복원 |
+| 표시·공유 | [ResultCard](../src/features/planner/ui/ResultCard.tsx) | 후보 전환, 시간 표시, 공유 동작 |
 
 ## 계산 기준
 
@@ -69,7 +81,9 @@ npm test
 
 [usePlanner](../src/features/planner/model/usePlanner.ts)가 계산과 reducer를 연결합니다. 입력칸은 2~6개이며 서로 다른 역이 2곳 이상 선택되면 계산할 수 있습니다. 나머지 입력칸이 비어 있어도 선택한 역을 기준으로 계산합니다.
 
-처음 열 때 주소에 `?from=`이 있으면 [urlState](../src/features/planner/model/urlState.ts)로 출발역을 복원하고, 2곳 이상이면 계산까지 마친 상태로 시작합니다. 결과가 있는 동안에는 출발역과 선택 후보를 `history.replaceState`로 주소에 반영하고, 결과가 사라지면 쿼리도 지웁니다.
+처음 열 때 주소에 `?from=`이 있으면 [urlState](../src/features/planner/model/urlState.ts)로 출발역을 복원하고, 2곳 이상이면 계산까지 마친 상태로 시작합니다. URL의 `from`에는 표시 이름이 아닌 역 키가 들어갑니다. 예를 들어 경의중앙선 신촌은 `신촌(경의중앙)`으로 2호선 신촌과 구분합니다. `pick`은 0부터 시작하는 후보 인덱스이므로 `pick=1`은 두 번째 후보입니다.
+
+결과가 있는 동안에는 출발역과 선택 후보를 `history.replaceState`로 주소에 반영하고, 결과가 사라지면 쿼리도 지웁니다.
 
 | 조작 | 상태 변화 |
 |---|---|
