@@ -12,7 +12,8 @@
 |---|---|---|
 | 개발자가 데이터 갱신 | OSM 관계 수집·정제 → TypeScript 데이터 생성 | Overpass API |
 | 앱 모듈 로드 | 정적 데이터로 그래프와 검색 카탈로그 구성 | 없음 |
-| 출발역 검색·계산 | 카탈로그 검색 → 출발지별 다익스트라 → 후보 정렬·경로 복원 | 없음 |
+| 앱 첫 로드 | 주소 쿼리(`?from=`)가 있으면 출발역 복원과 계산을 초기 상태에서 수행 | 없음 |
+| 출발역 검색·계산 | 카탈로그 검색 → 출발지별 다익스트라 → 후보 정렬 → 상위 후보만 경로 복원 | 없음 |
 | 결과 시각화 | App이 마커·경로·중간역을 지도 props로 변환 | Kakao Maps SDK |
 
 ## 의존 관계
@@ -38,7 +39,7 @@ flowchart TD
 
 ## 상태와 오류의 경계
 
-[plannerReducer](../src/features/planner/model/plannerReducer.ts)는 출발지, 결과, 선택 후보, 계산 오류를 관리합니다. 입력 조건이 바뀌면 기존 결과를 초기화하고, 후보 변경은 같은 결과 안의 선택만 바꿉니다.
+[plannerReducer](../src/features/planner/model/plannerReducer.ts)는 출발지, 결과, 선택 후보, 계산 오류를 관리합니다. 입력 조건이 바뀌면 기존 결과를 초기화하고, 후보 변경은 같은 결과 안의 선택만 바꿉니다. [urlState](../src/features/planner/model/urlState.ts)는 주소 쿼리와 출발역·후보 사이의 변환만 담당하고, 주소 읽기·쓰기는 `usePlanner`가 수행합니다.
 
 [KakaoMap](../src/features/map/ui/KakaoMap.tsx)은 로딩·준비·키 누락·SDK 오류 상태를 관리합니다. 계산 상태와 지도 상태를 따로 두기 때문에 키가 없어도 카드 결과를 확인할 수 있습니다. [SDK 로더](../src/features/map/api/kakaoLoader.ts)는 공유 Promise로 중복 로딩 요청을 모읍니다.
 

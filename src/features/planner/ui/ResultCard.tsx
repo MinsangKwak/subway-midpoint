@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { lineById, subwayGraph } from '@/data/subway';
+import { lineById, linesOf } from '@/data/subway';
 import type { MidpointCandidate, MidpointResult } from '@/domain/subway/midpoint';
 import { formatLineNames, formatMinutes, formatTransfers } from '@/shared/lib/format';
 import { Icon } from '@/shared/ui/Icon';
 import { IconButton } from '@/shared/ui/Button/Button';
 import { LineBadges } from '@/features/planner/ui/LineBadge/LineBadge';
 import type { Departure } from '../model/plannerReducer';
+import { buildPlannerQuery } from '../model/urlState';
 import styles from './ResultCard.module.css';
 
 type Props = {
@@ -16,11 +17,6 @@ type Props = {
   colorOf: (departureId: string) => string;
   onPick: (index: number) => void;
 };
-
-const lineIdsOf = (name: string) =>
-  Array.from(new Set(Object.values(subwayGraph.nodes).filter((n) => n.name === name).map((n) => n.lineId))).sort(
-    (a, b) => Number(a) - Number(b),
-  );
 
 // 역명판 테두리: 노선이 하나면 그 색, 여럿이면 색을 잘라 이은 그라데이션
 const signBorder = (lineIds: string[]) => {
@@ -36,12 +32,19 @@ const buildShareText = (c: MidpointCandidate, departures: Departure[]) => {
     const from = departures[leg.index]?.station?.name ?? '출발지';
     return `- ${from} → ${formatMinutes(leg.minutes)} (${formatTransfers(leg.transfers)})`;
   });
-  return [`중간지점: ${c.name}역 (${formatLineNames(lineIdsOf(c.name))})`, ...lines].join('\n');
+  return [`중간지점: ${c.name}역 (${formatLineNames(linesOf(c.lineIds))})`, ...lines].join('\n');
+};
+
+// 받는 사람이 같은 출발역·후보로 바로 열 수 있는 주소
+const buildShareUrl = (departures: Departure[], selectedIndex: number) => {
+  const stations = departures.flatMap((d) => (d.station ? [d.station] : []));
+  const { origin, pathname } = window.location;
+  return `${origin}${pathname}${buildPlannerQuery(stations, selectedIndex)}`;
 };
 
 export const ResultCard = ({ result, candidate, selectedIndex, departures, colorOf, onPick }: Props) => {
   const [copied, setCopied] = useState(false);
-  const lineIds = lineIdsOf(candidate.name);
+  const lineIds = candidate.lineIds;
   const average = candidate.legs.length ? candidate.totalMinutes / candidate.legs.length : null;
 
   useEffect(() => {
@@ -50,14 +53,34 @@ export const ResultCard = ({ result, candidate, selectedIndex, departures, color
     return () => window.clearTimeout(t);
   }, [copied]);
 
+  // 탭 패턴: 선택된 칩만 Tab 순서에 두고, 방향키·Home·End 로 다른 후보를 고른다
+  const onTabKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const last = result.candidates.length - 1;
+    const next =
+      e.key === 'ArrowRight' || e.key === 'ArrowDown'
+        ? Math.min(selectedIndex + 1, last)
+        : e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+          ? Math.max(selectedIndex - 1, 0)
+          : e.key === 'Home'
+            ? 0
+            : e.key === 'End'
+              ? last
+              : null;
+    if (next === null || next === selectedIndex) return;
+    e.preventDefault();
+    onPick(next);
+    (e.currentTarget.children[next] as HTMLElement | undefined)?.focus();
+  };
+
   const share = async () => {
     const text = buildShareText(candidate, departures);
+    const url = buildShareUrl(departures, selectedIndex);
     try {
       if (navigator.share) {
-        await navigator.share({ title: '지하철 중간지점', text });
+        await navigator.share({ title: '지하철 중간지점', text, url });
         return;
       }
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(`${text}\n${url}`);
       setCopied(true);
     } catch {
       // 사용자가 공유 시트를 닫은 경우 등. 조용히 넘긴다
@@ -78,7 +101,7 @@ export const ResultCard = ({ result, candidate, selectedIndex, departures, color
           </h2>
           <div className={styles.lines}>
             <LineBadges lineIds={lineIds} size="md" />
-            <span className={styles.lineNames}>{formatLineNames(lineIds)}</span>
+            <span className={styles.lineNames}>{formatLineNames(linesOf(lineIds))}</span>
           </div>
         </div>
         <IconButton label={copied ? '복사됨' : '결과 공유'} onClick={share}>
@@ -117,13 +140,14 @@ export const ResultCard = ({ result, candidate, selectedIndex, departures, color
       {result.candidates.length > 1 && (
         <div className={styles.alt}>
           <p className={styles.altLabel}>다른 후보</p>
-          <div className={styles.chips} role="tablist" aria-label="중간지점 후보">
+          <div className={styles.chips} role="tablist" aria-label="중간지점 후보" onKeyDown={onTabKeyDown}>
             {result.candidates.map((c, i) => (
               <button
                 key={c.stationKey}
                 type="button"
                 role="tab"
                 aria-selected={i === selectedIndex}
+                tabIndex={i === selectedIndex ? 0 : -1}
                 className={[styles.chip, i === selectedIndex ? styles.chipActive : ''].join(' ')}
                 onClick={() => onPick(i)}
               >

@@ -1,4 +1,4 @@
-import { normalizeStationName, stationKey } from './graph';
+import { normalizeStationName, sortLineIds, stationKey } from './graph';
 import type { RawStation, Station, SubwayLine } from './types';
 
 export type StationCatalog = {
@@ -23,11 +23,11 @@ export const buildStationCatalog = (
   const byKey: Record<string, Station> = {};
 
   for (const [key, group] of grouped) {
-    const lineIds = Array.from(new Set(group.map((s) => s.lineId))).sort(
-      (a, b) => Number(a) - Number(b) || a.localeCompare(b),
-    );
+    const lineIds = sortLineIds(Array.from(new Set(group.map((s) => s.lineId))));
     // 표시 이름은 가장 짧은 것(예: 이수). 나머지 이름과 별칭은 검색어로만 잡히게 aliases 에 둔다
-    const names = Array.from(new Set(group.map((g) => g.name))).sort((a, b) => a.length - b.length);
+    const names = Array.from(new Set(group.map((g) => g.name))).sort(
+      (a, b) => a.length - b.length || a.localeCompare(b, 'ko'),
+    );
     const aliases = Array.from(
       new Set([...names.slice(1), ...group.flatMap((g) => g.aliases ?? [])].filter((n) => n !== names[0])),
     );

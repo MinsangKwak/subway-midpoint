@@ -9,3 +9,7 @@ build
 
 # Local agent launch settings
 .claude/
+
+# Playwright
+test-results
+playwright-report

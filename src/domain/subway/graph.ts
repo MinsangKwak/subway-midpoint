@@ -32,6 +32,17 @@ export const normalizeStationName = (name: string) =>
 export const stationKey = (s: Pick<RawStation, 'name' | 'transferName'>) =>
   normalizeStationName(s.transferName ?? s.name);
 
+// 숫자 노선은 번호순, 그 밖의 노선은 이름순으로 뒤에 둔다. 카탈로그와 결과 카드가 같은 순서를 쓴다
+export const sortLineIds = (lineIds: string[]) =>
+  [...lineIds].sort((a, b) => {
+    const na = Number(a);
+    const nb = Number(b);
+    if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+    if (Number.isFinite(na)) return -1;
+    if (Number.isFinite(nb)) return 1;
+    return a.localeCompare(b, 'ko');
+  });
+
 const addEdge = (adj: Record<string, GraphEdge[]>, from: string, edge: GraphEdge) => {
   const list = (adj[from] ??= []);
   if (list.some((e) => e.to === edge.to && e.kind === edge.kind)) return;
@@ -88,4 +99,10 @@ export const buildSubwayGraph = (
   }
 
   return { nodes, adj, nodesByName };
+};
+
+// 같은 역의 노선별 이름 중 가장 짧은 것을 표시 이름으로 쓴다 (총신대입구·이수 → 이수)
+export const stationDisplayName = (graph: SubwayGraph, key: string) => {
+  const names = (graph.nodesByName[key] ?? []).map((id) => graph.nodes[id].name);
+  return names.sort((a, b) => a.length - b.length || a.localeCompare(b, 'ko'))[0] ?? key;
 };

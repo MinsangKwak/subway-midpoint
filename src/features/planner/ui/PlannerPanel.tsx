@@ -1,4 +1,4 @@
-import { stationCatalog } from '@/data/subway';
+import { stationCatalog, SUBWAY_LINES } from '@/data/subway';
 import { Button } from '@/shared/ui/Button/Button';
 import { Icon } from '@/shared/ui/Icon';
 import { DepartureField } from './DepartureField';
@@ -95,7 +95,7 @@ export const PlannerPanel = ({ planner, onComputed }: Props) => {
 
       <footer className={styles.footer}>
         <p>
-          수도권 전철 1~9호선 {stationCatalog.stations.length}개 역 · 역 데이터 ©{' '}
+          수도권 전철 {SUBWAY_LINES.length}개 노선 {stationCatalog.stations.length}개 역 · 역 데이터 ©{' '}
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
             OpenStreetMap
           </a>{' '}

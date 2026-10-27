@@ -5,6 +5,7 @@
   "type": "module",
   "description": "여러 출발지의 지하철 중간 지점을 찾아주는 웹 서비스",
   "homepage": "https://minsangkwak.github.io/subway-midpoint/",
+  "license": "MIT",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc --noEmit && vite build",
@@ -13,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "check": "npm run lint && npm run typecheck && npm test && npm run docs:check && npm run build",
     "data:stations": "node scripts/fetch-stations.mjs",
     "docs:check": "node scripts/check-docs.mjs"
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "1.63.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react-swc": "^3.7.0",

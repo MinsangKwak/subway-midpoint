@@ -6,6 +6,8 @@ export type SubwayLine = {
   id: LineId;
   name: string;
   color: string;
+  // 번호가 아닌 노선의 배지 글자 (예: 경의). 없으면 id 를 그대로 쓴다
+  badge?: string;
 };
 
 // 노선별 물리 정류장. 환승역은 노선마다 별도 노드를 가진다.
