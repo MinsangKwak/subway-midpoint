@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSubwayGraph, TRANSFER_MINUTES } from './graph';
+import { buildSubwayGraph, sortLineIds, stationDisplayName, TRANSFER_MINUTES } from './graph';
 import type { LineSegment, RawStation } from './types';
 
 const stations: RawStation[] = [
@@ -52,5 +52,23 @@ describe('buildSubwayGraph', () => {
     expect(() =>
       buildSubwayGraph(stations, [{ lineId: '1', stationIds: ['a1', 'zz'] }]),
     ).toThrow(/unknown station/);
+  });
+});
+
+describe('sortLineIds / stationDisplayName', () => {
+  it('orders numeric lines first and named lines after', () => {
+    expect(sortLineIds(['7', 'S', '2', 'A', '10'])).toEqual(['2', '7', '10', 'A', 'S']);
+  });
+
+  it('picks the shortest name of an aliased transfer station', () => {
+    const graph = buildSubwayGraph(
+      [
+        { id: 'x4', name: '총신대입구', lineId: '4', latitude: 37.4, longitude: 126.9, transferName: '이수' },
+        { id: 'x7', name: '이수', lineId: '7', latitude: 37.4, longitude: 126.9 },
+      ],
+      [],
+    );
+    expect(stationDisplayName(graph, '이수')).toBe('이수');
+    expect(stationDisplayName(graph, '없는역')).toBe('없는역');
   });
 });

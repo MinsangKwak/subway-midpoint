@@ -41,6 +41,18 @@ describe('calculateMidpoint (synthetic line)', () => {
     expect(result?.candidates).toHaveLength(2);
     expect(result?.candidates[0].maxMinutes).toBeLessThanOrEqual(result!.candidates[1].maxMinutes);
   });
+
+  it('restores a full path for every returned candidate', () => {
+    const result = calculateMidpoint(graph, ['p0', 'p4'], { topN: 3 });
+    for (const c of result!.candidates) {
+      expect(c.legs).toHaveLength(2);
+      for (const leg of c.legs) {
+        expect(leg.nodeIds[0]).toBe(leg.fromId);
+        expect(leg.nodeIds[leg.nodeIds.length - 1]).toBe(leg.toId);
+        expect(leg.points).toHaveLength(leg.nodeIds.length);
+      }
+    }
+  });
 });
 
 describe('calculateMidpoint (real dataset)', () => {
@@ -69,6 +81,23 @@ describe('calculateMidpoint (real dataset)', () => {
     const names = result!.candidates.map((c) => c.name);
     expect(new Set(names).size).toBe(names.length);
     expect(result!.best.legs.some((l) => l.transfers >= 1)).toBe(true);
+  });
+
+  it('shows the short display name and every line for an aliased transfer station', () => {
+    // 4호선 총신대입구와 7호선 이수는 transferName 으로 묶인 같은 역이다
+    const result = calculateMidpoint(subwayGraph, [nodesOf('사당'), nodesOf('내방')], { topN: 10 });
+    const isu = result!.candidates.find((c) => c.stationKey === '이수')!;
+    expect(isu.name).toBe('이수');
+    expect(isu.lineIds).toEqual(['4', '7']);
+    expect(stationCatalog.byKey['이수'].name).toBe(isu.name);
+  });
+
+  it('excludes an aliased transfer station from candidates when it is a departure', () => {
+    const result = calculateMidpoint(subwayGraph, [nodesOf('이수'), nodesOf('강남')], { topN: 50 });
+    expect(result!.candidates.some((c) => c.stationKey === '이수')).toBe(false);
+    // 같은 역을 두 노선 노드로 각각 넣어도 하나의 출발지로 본다
+    const dup = calculateMidpoint(subwayGraph, [nodeOf('이수'), nodesOf('이수')[1]]);
+    expect(dup).toBeNull();
   });
 
   it('routes 의정부 → 천안 through 구로 instead of a phantom direct edge', () => {
