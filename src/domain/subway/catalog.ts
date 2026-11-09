@@ -6,7 +6,10 @@ export type StationCatalog = {
   byKey: Record<string, Station>;
 };
 
-// 노선별 물리 정류장을 "역 이름" 단위로 묶어 사용자가 고를 수 있는 목록을 만든다.
+// 책임: 노선별 물리 정류장을 "역 이름" 단위로 묶어 사용자가 고를 수 있는 목록을 만든다.
+// 불변: Station.key 는 graph.nodesByName 의 키와 같은 규칙(stationKey)으로 만든다. URL 의 from 값도 이 키다.
+// 불변: Station.nodeIds 는 같은 키의 모든 노선 노드라서, 그대로 calculateMidpoint 의 출발지 묶음으로 넘긴다.
+// 불변: 표시 이름은 가장 짧은 이름이며 stationDisplayName 과 같은 결과를 낸다 (총신대입구·이수 → 이수).
 export const buildStationCatalog = (
   rawStations: RawStation[],
   lines: SubwayLine[],

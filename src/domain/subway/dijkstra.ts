@@ -47,8 +47,13 @@ class MinHeap {
   }
 }
 
+// 책임: 출발 노드(들)에서 모든 노드까지의 최소 소요시간과 직전 노드를 구한다.
+// BFS가 아닌 다익스트라인 이유: 간선 가중치가 거리 기반 분 단위라 균일하지 않다.
+// 라이브러리를 쓰지 않는 이유: 다중 출발점·노드 묶음 도착 같은 도메인 규칙을 그대로 두기 위해서다.
 // 출발점은 하나 또는 여러 노드다. 환승역에서 출발하면 그 역의 모든 노선 노드가
 // 동시에 출발점이 되어 첫 환승 비용을 물지 않는다.
+// 불변: 모든 간선 minutes >= 0 (MIN_HOP_MINUTES, TRANSFER_MINUTES). 음수 간선은 가정하지 않는다.
+// 불변: graph.nodes 에 없는 출발 id 는 건너뛴다. 유효한 출발점이 없으면 모든 dist 가 Infinity 다.
 export const dijkstra = (graph: SubwayGraph, start: string | string[]): DijkstraResult => {
   const dist: Record<string, number> = {};
   const prev: Record<string, string | null> = {};
@@ -83,7 +88,9 @@ export const dijkstra = (graph: SubwayGraph, start: string | string[]): Dijkstra
   return { dist, prev };
 };
 
-// prev 맵으로 출발점 → end 노드 id 경로를 복원한다. 연결이 없으면 빈 배열.
+// 책임: prev 맵으로 출발점 → end 노드 id 경로를 복원한다. 연결이 없으면 빈 배열.
+// 불변: 결과가 비어 있지 않으면 path[0] 은 start 중 하나, 마지막 원소는 endId 다.
+// 비용은 경로 길이에 비례하므로 호출 측(calculateMidpoint)은 상위 후보에만 호출한다.
 export const restorePath = (
   prev: Record<string, string | null>,
   start: string | string[],
