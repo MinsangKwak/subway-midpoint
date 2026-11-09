@@ -1,8 +1,8 @@
-# 검증 기록 · 2026-10-27 (단위 테스트 2026-11-09 재실행)
+# 검증 기록 · 2026-11-09
 
 [저장소 홈](../README.md) · [프로젝트 설명](PROJECT.md) · [개발 가이드](DEVELOPMENT.md)
 
-**환승 별칭 역 표시 수정, 상위 후보만 경로 복원, 노선 4개 추가, URL 상태 복원, Playwright 테스트 도입을 반영한 뒤 자동 검사와 브라우저 흐름을 확인했습니다.**
+**2026-11-09 main CI에서 단위 테스트 59개와 브라우저 테스트 12개가 통과했습니다.** 데이터 재생성·성능 측정·로컬 화면 캡처는 기존 2026-10-27 기록으로 구분합니다.
 
 ## 기록을 읽는 기준
 
@@ -10,41 +10,42 @@
 
 | 근거 | 기준·범위 |
 | --- | --- |
+| 2026-11-09 main CI | [main `ef57cc8`](https://github.com/MinsangKwak/subway-midpoint/commit/ef57cc8d63070b65d13d274d73ccceaae2097f84)의 [실행 #42580198270](https://github.com/MinsangKwak/subway-midpoint/actions/runs/42580198270): 문서·lint·타입·운영 경로 빌드, Vitest 9개 파일·59개와 Playwright 12개 통과 |
 | 2026-10-27 기준 코드 | [main `ba32e1d`](https://github.com/MinsangKwak/subway-midpoint/commit/ba32e1d2e298c77cd8e53212bcc97047cb0d4bca) |
-| CI 확인 | [실행 #40428586164](https://github.com/MinsangKwak/subway-midpoint/actions/runs/40428586164): check·e2e 성공 |
-| 배포 확인 | [실행 #40428586247](https://github.com/MinsangKwak/subway-midpoint/actions/runs/40428586247): 성공 |
+| 2026-10-27 CI·배포 | [CI #40428586164](https://github.com/MinsangKwak/subway-midpoint/actions/runs/40428586164): check·e2e 성공. [배포 #40428586247](https://github.com/MinsangKwak/subway-midpoint/actions/runs/40428586247): 성공 |
 | 로컬 기록 | 아래 설치·3가지 base 빌드·캡처·성능 수치는 기존 2026-10-27 기록 |
-| 2026-11-09 재실행 | 도메인 경계 테스트 6개 추가 후 로컬(Node.js 22, `npm ci`)에서 `lint`·`typecheck`·`test`(9개 파일·59개)·`docs:check`·`build` 통과. Playwright와 배포는 재실행하지 않음 |
+| 2026-11-09 기존 로컬 기록 | 도메인 경계 테스트 6개 추가 후 Node.js 22에서 `lint`·`typecheck`·`test`·`docs:check`·`build` 통과. 해당 로컬 작업에서는 Playwright와 배포를 재실행하지 않음 |
 
 운영 지도 인증과 실기기 사용성은 배포 결과와 별도로 확인할 항목입니다.
 
 ## 자동 검사
 
-검증 환경은 Node.js 22.22.0, npm lockfile 설치 기준입니다. 저장소 요구사항은 Node.js 22 이상, CI 설정은 22입니다.
+2026-11-09 CI는 Node.js 22와 `npm ci`를 사용했습니다. 2026-10-27 로컬 기록의 환경은 Node.js 22.22.0입니다.
 
-| 검사 | 결과 |
-|---|---|
-| `npm ci` | 설치 완료 |
-| `npm run lint` | 통과 |
-| `npm run typecheck` | 통과 |
-| `npm test` | 8개 파일·53개 테스트 통과 (2026-11-09: 9개 파일·59개) |
-| `npm run docs:check` | 상대 파일 링크·코드 블록 검사 통과 |
-| `npm run build` | 루트 base 빌드 통과 |
-| `npm run test:e2e` | Chromium 데스크톱 10개·모바일 2개 통과 |
-| `npx vite build --mode pages` | 운영 base 빌드 통과 |
-| `npx vite build --mode pages-dev` | 개발 base 빌드 통과 |
+| 검사 | 확인 시점·환경 | 결과 |
+|---|---|---|
+| `npm ci` | 2026-11-09 CI | 설치 완료 |
+| `npm run lint` · `npm run typecheck` | 2026-11-09 CI | 통과 |
+| `npm test` | 2026-11-09 CI | 9개 파일·59개 테스트 통과 |
+| `npm run docs:check` | 2026-11-09 CI | 상대 파일 링크·코드 블록 검사 통과 |
+| `npm run test:e2e` | 2026-11-09 CI | Chromium 데스크톱 10개·모바일 2개 통과 |
+| `npx vite build --mode pages` | 2026-11-09 CI | 운영 base 빌드 통과 |
+| `npm run build` | 2026-10-27 로컬 | 루트 base 빌드 통과 |
+| `npx vite build --mode pages-dev` | 2026-10-27 로컬 | 개발 base 빌드 통과 |
 
-| 단위 테스트 대상 | 개수 |
+| 단위 테스트 대상 (2026-11-09) | 개수 |
 |---|---:|
 | 그래프·노선 정렬·표시 이름 | 8 |
 | 다익스트라 | 4 |
-| 중간지점 추천 (합성 노선 6 · 정렬 규칙 2 · 환승 비용 2 · 실제 데이터 6 · 경로 복원 오류 1) | 11 → 17 (2026-11-09) |
+| 중간지점 추천 (합성 노선 6 · 정렬 규칙 2 · 환승 비용 2 · 실제 데이터 6 · 경로 복원 오류 1) | 17 |
 | 역 검색 카탈로그 | 5 |
 | 생성 데이터 (노선 범위·중복·좌표·종점·환승 묶음·동명이역·거리·연결) | 8 |
 | planner reducer | 6 |
 | URL 상태 파싱·생성 | 6 |
 | 표시 형식 | 5 |
-| 합계 | 53 → 59 (2026-11-09) |
+| 합계 | 59 |
+
+2026-10-27에는 8개 파일·53개였으며, 2026-11-09에 정렬·환승 비용·도달 가능성·경로 복원 오류의 경계 사례 6개를 추가했습니다.
 
 | 브라우저 테스트 (Playwright, 지도 키 없는 preview 빌드) | 확인 내용 |
 |---|---|
@@ -71,8 +72,10 @@
 | 노선별 노드 | 606 |
 | 운행 구간 | 149 |
 | 환승역 | 86 |
+| LINE 간선 (양방향 포함) | 1,202 |
+| TRANSFER 간선 (양방향 포함) | 222 |
 
-같은 키로 묶인 노선별 노드 사이 거리가 800m를 넘는 경우는 없었습니다. 2호선 신촌과 경의중앙선 신촌, 5호선 양평과 경의중앙선 양평은 스크립트에서 다른 키로 분리했고 데이터 테스트로 고정했습니다.
+노선·역·구간 수는 생성 데이터 기준이며, 간선 수는 2026-11-09 `subwayGraph` 집계입니다. 같은 키로 묶인 노선별 노드 사이 거리가 800m를 넘는 경우는 없었습니다. 2호선 신촌과 경의중앙선 신촌, 5호선 양평과 경의중앙선 양평은 스크립트에서 다른 키로 분리했고 데이터 테스트로 고정했습니다.
 
 ## 성능 측정
 
