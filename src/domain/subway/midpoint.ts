@@ -66,9 +66,19 @@ type Scored = {
   arrivals: Arrival[];
 };
 
+// 도달 가능 판정을 통과한 도착 노드의 경로가 복원되지 않으면 dist 와 prev 가 어긋난 것이다.
+// fromId 가 undefined 인 후보를 화면까지 흘려보내지 않고 원인을 가리키는 이름으로 멈춘다.
+export class PathRestoreError extends Error {
+  constructor(startIds: string[], endId: string) {
+    super(`경로를 복원할 수 없습니다: [${startIds.join(', ')}] → ${endId}`);
+    this.name = 'PathRestoreError';
+  }
+}
+
 const toCandidate = (graph: SubwayGraph, s: Scored): MidpointCandidate => {
   const legs: Leg[] = s.arrivals.map((a) => {
     const path = restorePath(a.prev, a.start.nodeIds, a.nodeId);
+    if (path.length === 0) throw new PathRestoreError(a.start.nodeIds, a.nodeId);
     return {
       index: a.start.index,
       fromId: path[0],
@@ -95,9 +105,13 @@ const toCandidate = (graph: SubwayGraph, s: Scored): MidpointCandidate => {
   };
 };
 
-// 여러 출발지의 중간지점을 찾는다.
-// 기준: 가장 오래 걸리는 사람의 시간(max)을 최소화하고, 같으면 합계가 작은 역.
+// 책임: 여러 출발지의 중간지점을 찾는다. 그래프 조회 → 출발지별 다익스트라 → 역 단위 점수 → 정렬 → 상위 topN 경로 복원.
+// 기준: 가장 오래 걸리는 사람의 시간(max)을 최소화하고, 같으면 합계가 작은 역, 그래도 같으면 표시 이름의 한국어순.
 // 후보는 물리 노드가 아니라 "역" 단위다. 환승역은 어느 노선 노드로 도착해도 같은 역이다.
+// 불변: 출발역 자체는 후보가 아니다. 한 출발지라도 닿지 못하는 역은 후보가 아니다.
+// 불변: candidates 는 점수순이고 best === candidates[0] 이다. 반환된 모든 leg 는 복원된 경로를 가진다.
+// null 을 돌려주는 경우: 서로 다른 출발역이 2곳 미만이거나, 모두가 닿는 역이 하나도 없을 때.
+// 다익스트라 호출 횟수는 출발지 수(최대 6)와 같고, 경로 복원은 topN × 출발지 수만큼만 한다.
 export const calculateMidpoint = (
   graph: SubwayGraph,
   starts: StartSpec[],

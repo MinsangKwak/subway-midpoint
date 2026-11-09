@@ -52,6 +52,11 @@ const addEdge = (adj: Record<string, GraphEdge[]>, from: string, edge: GraphEdge
 const hopMinutes = (a: RawStation, b: RawStation) =>
   Math.max(MIN_HOP_MINUTES, (haversineKm(a, b) / AVERAGE_SPEED_KMH) * 60);
 
+// 책임: 노선별 노드와 운행 구간으로 가중 그래프를 만든다. 데이터 검증은 여기서 끝낸다.
+// 불변: 구간 안의 이웃만 LINE 간선으로 잇는다 (배열 전체의 이웃이 아니다. 1호선 분기 회귀 참고).
+// 불변: 같은 stationKey·다른 lineId 노드끼리만 TRANSFER 간선을 둔다. 같은 노선 노드는 환승이 아니다.
+// 불변: 간선은 항상 양방향이며 (to, kind) 가 같은 간선은 한 번만 넣는다.
+// 중복 id, 없는 역 참조, 다른 노선의 역이 섞인 구간은 조용히 넘기지 않고 throw 한다.
 export const buildSubwayGraph = (
   stations: RawStation[],
   segments: LineSegment[],

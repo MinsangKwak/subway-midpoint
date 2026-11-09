@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { stationCatalog, subwayGraph } from '@/data/subway';
-import { buildSubwayGraph } from './graph';
+import { buildSubwayGraph, TRANSFER_MINUTES, type SubwayGraph } from './graph';
 import { calculateMidpoint } from './midpoint';
 import type { LineSegment, RawStation } from './types';
 
@@ -52,6 +52,108 @@ describe('calculateMidpoint (synthetic line)', () => {
         expect(leg.points).toHaveLength(leg.nodeIds.length);
       }
     }
+  });
+
+  it('breaks a max-time tie by Korean name order', () => {
+    // p0·p4 에서 P1 과 P3 는 최대 3구간·합계 4구간으로 같다. 그러면 이름순으로 P1 이 앞선다
+    const result = calculateMidpoint(graph, ['p0', 'p4'], { topN: 3 });
+    expect(result!.candidates.map((c) => c.name)).toEqual(['P2', 'P1', 'P3']);
+    expect(result!.candidates[1].maxMinutes).toBe(result!.candidates[2].maxMinutes);
+    expect(result!.candidates[1].totalMinutes).toBe(result!.candidates[2].totalMinutes);
+  });
+});
+
+describe('calculateMidpoint (ranking rule)', () => {
+  // 소요시간을 직접 지정한 그래프. 출발지 s1·s2 와 후보 X·Y·Z
+  //   X: 10/10 (max 10, 합 20)   Y: 10/8 (max 10, 합 18)   Z: 8/10 (max 10, 합 18)
+  const node = (id: string, name: string) => ({ id, name, lineId: '1', latitude: 0, longitude: 0 });
+  const graph: SubwayGraph = {
+    nodes: { s1: node('s1', 'S1'), s2: node('s2', 'S2'), x: node('x', 'X'), y: node('y', 'Y'), z: node('z', 'Z') },
+    adj: {
+      s1: [
+        { to: 'x', minutes: 10, kind: 'LINE' },
+        { to: 'y', minutes: 10, kind: 'LINE' },
+        { to: 'z', minutes: 8, kind: 'LINE' },
+      ],
+      s2: [
+        { to: 'x', minutes: 10, kind: 'LINE' },
+        { to: 'y', minutes: 8, kind: 'LINE' },
+        { to: 'z', minutes: 10, kind: 'LINE' },
+      ],
+      x: [
+        { to: 's1', minutes: 10, kind: 'LINE' },
+        { to: 's2', minutes: 10, kind: 'LINE' },
+      ],
+      y: [
+        { to: 's1', minutes: 10, kind: 'LINE' },
+        { to: 's2', minutes: 8, kind: 'LINE' },
+      ],
+      z: [
+        { to: 's1', minutes: 8, kind: 'LINE' },
+        { to: 's2', minutes: 10, kind: 'LINE' },
+      ],
+    },
+    nodesByName: { S1: ['s1'], S2: ['s2'], X: ['x'], Y: ['y'], Z: ['z'] },
+  };
+
+  it('orders by max, then total, then name', () => {
+    const result = calculateMidpoint(graph, ['s1', 's2']);
+    expect(result!.candidates.map((c) => c.name)).toEqual(['Y', 'Z', 'X']);
+    expect(result!.best.maxMinutes).toBe(10);
+    expect(result!.best.totalMinutes).toBe(18);
+  });
+
+  it('ignores a candidate that only one start can reach', () => {
+    // s1 → w 만 잇고 x·y·z → s1 간선을 빼면 s2 는 w 에 닿지 못한다. 그러면 w 는 아무리 가까워도 후보에서 빠진다
+    const withoutBack = (id: string) => graph.adj[id].filter((e) => e.to !== 's1');
+    const partial: SubwayGraph = {
+      nodes: { ...graph.nodes, w: node('w', 'W') },
+      adj: {
+        ...graph.adj,
+        s1: [...graph.adj.s1, { to: 'w', minutes: 1, kind: 'LINE' }],
+        x: withoutBack('x'),
+        y: withoutBack('y'),
+        z: withoutBack('z'),
+        w: [],
+      },
+      nodesByName: { ...graph.nodesByName, W: ['w'] },
+    };
+    const result = calculateMidpoint(partial, ['s1', 's2'], { topN: 10 });
+    expect(result!.candidates.map((c) => c.name)).toEqual(['Y', 'Z', 'X']);
+  });
+});
+
+describe('calculateMidpoint (transfer penalty)', () => {
+  // 1호선 a-b-c, 2호선 b-d. B 는 두 노선의 환승역이다
+  const stations: RawStation[] = [
+    { id: 'a1', name: 'A', lineId: '1', latitude: 37.5, longitude: 127.0 },
+    { id: 'b1', name: 'B', lineId: '1', latitude: 37.51, longitude: 127.0 },
+    { id: 'c1', name: 'C', lineId: '1', latitude: 37.52, longitude: 127.0 },
+    { id: 'b2', name: 'B', lineId: '2', latitude: 37.51, longitude: 127.0 },
+    { id: 'd2', name: 'D', lineId: '2', latitude: 37.51, longitude: 127.02 },
+  ];
+  const segments: LineSegment[] = [
+    { lineId: '1', stationIds: ['a1', 'b1', 'c1'] },
+    { lineId: '2', stationIds: ['b2', 'd2'] },
+  ];
+  const graph = buildSubwayGraph(stations, segments);
+  const minutesOf = (from: string, to: string) => graph.adj[from].find((e) => e.to === to)!.minutes;
+
+  it('adds TRANSFER_MINUTES once per line change and counts it in leg.transfers', () => {
+    const result = calculateMidpoint(graph, ['a1', 'd2'], { topN: 5 });
+    const c = result!.candidates.find((x) => x.name === 'C')!;
+    const fromD = c.legs.find((l) => l.index === 1)!;
+    expect(fromD.transfers).toBe(1);
+    expect(fromD.nodeIds).toEqual(['d2', 'b2', 'b1', 'c1']);
+    expect(fromD.minutes).toBeCloseTo(minutesOf('d2', 'b2') + TRANSFER_MINUTES + minutesOf('b1', 'c1'), 10);
+  });
+
+  it('arrives at a transfer station without paying the transfer', () => {
+    const result = calculateMidpoint(graph, ['a1', 'd2']);
+    expect(result!.best.name).toBe('B');
+    expect(result!.best.lineIds).toEqual(['1', '2']);
+    for (const leg of result!.best.legs) expect(leg.transfers).toBe(0);
+    expect(result!.best.maxMinutes).toBeCloseTo(Math.max(minutesOf('a1', 'b1'), minutesOf('d2', 'b2')), 10);
   });
 });
 
