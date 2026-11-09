@@ -27,8 +27,7 @@
 | 2026-02 | [초기 React 앱과 Kakao 지도 연동](https://github.com/MinsangKwak/subway-midpoint/commit/bd44c9e) | 지도 SDK 로딩과 React 렌더링 순서가 꼬이면 마커가 사라짐 | 로더를 분리하고 지도 상태를 계산 상태와 나눔 | [kakaoLoader](../src/features/map/api/kakaoLoader.ts) |
 | 2026-09 | [앱 구조·디자인·도구·배포 재구축](https://github.com/MinsangKwak/subway-midpoint/commit/ccc30ce) | 계산이 UI와 섞여 지도 없이 테스트할 수 없음 | 계산을 `domain`으로 분리하고 ESLint import 경계 도입 | [eslint.config.js](../eslint.config.js) |
 | 2026-09 | [OSM 기반 1~9호선 데이터 생성](https://github.com/MinsangKwak/subway-midpoint/commit/e9a5985) | 역 배열의 이웃을 연결하던 방식이 1호선 분기에서 실제 인접하지 않은 역을 이음 | 역 노드와 운행 구간 `LINE_SEGMENTS`를 나누고 구간 안의 이웃만 연결. 환승역은 노선별 노드를 유지하고 별도 간선으로 연결 | [graph.ts](../src/domain/subway/graph.ts) · [구로 경유 회귀 테스트](../src/domain/subway/midpoint.test.ts) |
-| 2026-10 | [문서를 docs로 통합](https://github.com/MinsangKwak/subway-midpoint/commit/88baf09) · [프로젝트 문서 개편](https://github.com/MinsangKwak/subway-midpoint/commit/ab01738) | 문서마다 역할이 겹침 | 문서별 역할을 나누고 검증 기록에 실행 조건과 확인 범위를 정리 | [검증 기록](VALIDATION.md) |
-| 2026-10 | [환승 별칭 역 표시 오류 수정과 상위 후보만 경로 복원](https://github.com/MinsangKwak/subway-midpoint/commit/538fe98) | 총신대입구(4호선)·이수(7호선)는 `transferName`으로 묶인 한 역인데 후보 이름을 첫 노드 `name`에서 가져와 "총신대입구 4호선"으로 보이고 7호선 배지가 빠짐. 후보 404개 전부의 경로·좌표를 만든 뒤 정렬 | 표시 이름·노선 목록을 역 키 기준으로 계산해 검색 목록과 결과 카드가 같은 이름을 씀. 정렬에는 최대 시간·합계만 필요하므로 경로 복원을 상위 후보로 제한 | 기존 로컬 기록 6인 계산 17.8ms → 2.3ms. 전후 데이터 범위가 달라 통제된 비교가 아님 ([측정 조건](VALIDATION.md#성능-측정)) |
+| 2026-10 | [환승 별칭 역 표시 오류 수정과 상위 후보만 경로 복원](https://github.com/MinsangKwak/subway-midpoint/commit/538fe98) | 총신대입구(4호선)·이수(7호선)는 `transferName`으로 묶인 한 역인데 후보 이름을 첫 노드 `name`에서 가져와 "총신대입구 4호선"으로 보이고 7호선 배지가 빠짐. 후보 404개 전부의 경로·좌표를 만든 뒤 정렬 | 표시 이름·노선 목록을 역 키 기준으로 계산해 검색 목록과 결과 카드가 같은 이름을 씀. 정렬에는 최대 시간·합계만 필요하므로 경로 복원을 상위 후보로 제한 | [표시 이름 회귀 테스트](../src/domain/subway/graph.test.ts) · [로컬 측정 기록](VALIDATION.md#성능-측정). 전후 데이터 범위가 달라 통제된 성능 비교는 아님 |
 | 2026-10 | [신분당·경의중앙·수인분당·공항철도 추가](https://github.com/MinsangKwak/subway-midpoint/commit/9c5fd54) | 2호선 신촌과 경의중앙선 신촌, 5호선 양평과 경의중앙선 양평이 같은 이름으로 환승역으로 묶임 | 생성 스크립트에 노선별 키 분리 표와 "같은 키의 노드가 800m 이상 떨어지면 경고" 검사, 데이터 테스트에서 같은 조건 확인 | [stations.test.ts](../src/data/subway/stations.test.ts) |
 | 2026-10 | [URL 상태 복원과 공유 주소](https://github.com/MinsangKwak/subway-midpoint/commit/cd12cc4) · [Playwright 테스트를 CI에 추가](https://github.com/MinsangKwak/subway-midpoint/commit/5af4a34) | 공유 버튼이 텍스트만 전달하면 받는 사람이 역을 다시 입력. 브라우저 흐름을 수동으로 확인 | 결과가 있을 때 `?from=역,역&pick=후보`를 `history.replaceState`로 반영하고, 그 주소로 열면 계산된 상태로 시작. 결과가 무효화되면 쿼리도 지움. 모르는 역·중복·7곳 이상은 파싱에서 버림 | [urlState](../src/features/planner/model/urlState.ts) · [e2e](../e2e/) |
 
@@ -37,13 +36,6 @@
 ![데이터 생성과 브라우저 실행을 구분한 계산·화면 연결 구조](images/architecture.png)
 
 **추천 계산은 UI와 지도 SDK 없이 실행할 수 있고, App이 결과를 화면에 연결합니다.** 역 데이터는 개발 단계에서 생성해 앱에 포함하며, 검색·계산 때마다 외부 데이터 API를 호출하지 않습니다.
-
-| 해결할 문제 | 구조 선택 | 동작과 검증 |
-| --- | --- | --- |
-| 지도 API 실패가 전체 기능을 막는 문제 | 계산 도메인과 지도 SDK 상태 분리 | 키 없이도 검색·계산과 테스트 실행 |
-| 입력 변경 뒤 이전 결과가 남는 문제 | reducer에서 입력과 결과를 함께 전이 | 조건 변경 시 결과·오류 초기화 |
-| 공유받은 사람이 역을 다시 입력하는 문제 | URL 변환 함수와 초기 상태 복원 | 같은 조건·선택 후보로 시작 |
-| 기능 간 수정 범위가 커지는 문제 | App에서 planner·map 조립, import 경계 검사 | 기능 간 직접 호출 제한 |
 
 ### 실행 시점
 
@@ -109,15 +101,26 @@ flowchart TD
 
 ### 상태와 오류의 경계
 
-[plannerReducer](../src/features/planner/model/plannerReducer.ts)는 출발지, 결과, 선택 후보, 계산 오류를 관리합니다. 입력 조건이 바뀌면 기존 결과를 초기화하고, 후보 변경은 같은 결과 안의 선택만 바꿉니다. [urlState](../src/features/planner/model/urlState.ts)는 주소 쿼리와 출발역·후보 사이의 변환만 담당하고, 주소 읽기·쓰기는 `usePlanner`가 수행합니다.
+[plannerReducer](../src/features/planner/model/plannerReducer.ts)는 출발지·결과·선택 후보·오류 메시지를 함께 관리합니다. 조건이 바뀐 뒤 이전 결과가 남지 않도록 입력 액션은 `invalidate`를 거치고, 후보 전환은 계산 결과를 유지합니다.
+
+| 조작 | 상태 변화 |
+|---|---|
+| 출발지 추가·삭제·검색어 변경·선택·지우기 | 출발지 갱신, 결과·오류·선택 후보 초기화 |
+| 계산 성공 | 결과 저장, 첫 후보 선택 |
+| 공통 추천 후보 없음 | 결과 제거, 오류 메시지 저장 |
+| 후보 전환 | 결과를 유지하고 선택 인덱스 변경 |
+
+[urlState](../src/features/planner/model/urlState.ts)는 주소 쿼리와 출발역·후보 사이를 변환하는 순수 함수입니다. `from`에는 표시 이름이 아닌 역 키를 저장해 `신촌`과 `신촌(경의중앙)`을 구분하고, `pick`은 0부터 시작하는 후보 인덱스입니다. 알 수 없는 역·중복·최대 입력 수를 넘은 역은 파싱에서 제외합니다.
+
+브라우저 주소 읽기·쓰기는 [usePlanner](../src/features/planner/model/usePlanner.ts)가 담당합니다. 첫 로드에 유효한 출발역이 2곳 이상이면 계산하고, 요청한 후보 인덱스가 없으면 첫 후보를 선택합니다. 결과가 있는 동안 `history.replaceState`로 조건과 선택 후보를 반영하고, 결과가 사라지면 쿼리도 지웁니다.
 
 [KakaoMap](../src/features/map/ui/KakaoMap.tsx)은 로딩·준비·키 누락·SDK 오류 상태를 관리합니다. 계산 상태와 지도 상태를 따로 두기 때문에 키가 없어도 카드 결과를 확인할 수 있습니다. [SDK 로더](../src/features/map/api/kakaoLoader.ts)는 공유 Promise로 중복 로딩 요청을 모읍니다.
 
-검색어 강조는 React 텍스트 요소로 나눠 표시합니다. 지도 커스텀 오버레이에 들어가는 이름은 HTML 이스케이프 후 삽입합니다. 위치 권한은 현재 위치 버튼을 누른 시점에 요청하며 추천의 출발역 선택을 대신하지 않습니다.
+검색 입력·공유의 키보드 동작은 [개발 가이드](DEVELOPMENT.md#react-상태와-검색)에 정리했습니다. 지도 커스텀 오버레이에 들어가는 이름은 HTML 이스케이프 후 삽입합니다. 위치 권한은 현재 위치 버튼을 누른 시점에 요청하며 추천의 출발역 선택을 대신하지 않습니다.
 
 ## 도메인 지도
 
-노선별 노드를 `stationKey`로 묶어 사용자가 선택하는 역 단위로 다룹니다. 아래 표는 이 흐름에 사용하는 타입과 필드입니다.
+노선별 노드 `RawStation`과 사용자가 선택하는 역 `Station`을 구분했습니다. 계산에는 노선별 `nodeIds`를 넘겨 환승 비용을 반영하고, 검색·URL 복원에는 역 단위 `key`를 사용합니다. 계산 결과의 `Leg`는 개인별 시간·환승 표시와 지도 경로에 함께 전달됩니다.
 
 | 타입 (파일) | 뜻 | 핵심 필드 | 쓰는 곳 |
 | --- | --- | --- | --- |
@@ -134,7 +137,7 @@ flowchart TD
 | `MidpointResult` ([midpoint.ts](../src/domain/subway/midpoint.ts)) | 계산 결과 | `best`(= `candidates[0]`), `candidates`(점수순 상위 `topN`) | reducer `result` |
 | `PlannerState` ([plannerReducer.ts](../src/features/planner/model/plannerReducer.ts)) | 화면 상태 | `departures`(2~6칸), `result`, `selectedCandidate`, `error` | `usePlanner`, 패널·카드 |
 
-데이터 규모(2026-11-09, 테스트 환경에서 `subwayGraph` 집계): 노선 13개, 역 509개, 노선별 노드 606개, 운행 구간 149개, LINE 간선 1,202개(양방향 포함), TRANSFER 간선 222개.
+노선·역·간선 수와 집계 조건은 [검증 기록의 데이터 표](VALIDATION.md#데이터-재생성-확인)에 모았습니다.
 
 ## 핵심 프로세스
 
@@ -153,7 +156,7 @@ flowchart TD
 
 | 선택지 | 쓰지 않은 이유 |
 | --- | --- |
-| BFS | 역 간 시간은 거리 기반(최소 1.5분)이고 환승은 5분으로 가중치가 다릅니다. 간선 수가 가장 적은 경로가 최단 시간 경로와 일치하지 않습니다. |
+| BFS | 역 간 거리와 환승 여부에 따라 간선 가중치가 다릅니다. 간선 수가 가장 적은 경로가 최단 시간 경로와 일치하지 않습니다. |
 | 배열 선형 탐색 다익스트라 | 노드 606개·간선 1,424개에서 매 단계 최소값을 선형 탐색하면 O(V²)입니다. 이진 힙을 사용하면 시간 복잡도가 O((V+E) log V)로 줄어듭니다. |
 | 플로이드–워셜(전체 쌍) | 한 번의 계산에 필요한 출발지는 최대 6곳입니다. 모든 역 쌍을 미리 계산하는 대신 선택한 출발지에서만 탐색합니다. |
 | 그래프 라이브러리 | 환승역의 노드 묶음을 출발점으로 받는 [탐색 함수](../src/domain/subway/dijkstra.ts)를 직접 구현했습니다. 역 단위 도착 판정과 출발역 제외는 `calculateMidpoint`가 담당하며, 탐색과 후보 계산을 나눠 테스트합니다. |
@@ -167,7 +170,7 @@ flowchart TD
 | 상태 관리 | `useReducer` + 훅 하나 | Redux·Zustand 등 스토어 | 한 화면의 `departures`·`result`·`selectedCandidate`·`error`를 관리합니다. 입력 변경과 결과 무효화 규칙은 reducer의 순수 함수로 테스트합니다. 여러 화면에서 상태를 공유해야 할 때 별도 스토어를 검토합니다. |
 | 계산 위치 | 브라우저 | 서버 API | 정적 데이터를 앱에 포함하고 최대 6곳의 출발지를 브라우저에서 계산합니다. 데이터만큼 번들 크기가 늘고 갱신 시 재배포가 필요합니다. 실시간 시각표를 도입하면 데이터 조회와 계산 위치를 다시 검토해야 합니다. |
 | 스타일 | CSS Modules + 토큰 CSS | Tailwind·CSS-in-JS | 컴포넌트별 클래스 범위를 분리하고 공통 색·간격을 [tokens.css](../src/app/styles/tokens.css)에서 관리합니다. 유틸리티 클래스 방식과 비교하면 컴포넌트별 스타일 파일을 별도로 관리해야 합니다. |
-| 소요시간 | 거리 기반 추정(32km/h, 최소 1.5분, 환승 5분) | 실제 시각표·실시간 API | 계산에 외부 API를 호출하지 않고 같은 입력으로 결과를 재현할 수 있습니다. 실제 운행시간과의 차이는 [README 현재 한계](../README.md#현재-한계)에 설명했습니다. |
+| 소요시간 | 거리·환승 비용 기반 추정 | 실제 시각표·실시간 API | 계산에 외부 API를 호출하지 않고 같은 입력으로 결과를 재현할 수 있습니다. [시간 가중치](DEVELOPMENT.md#그래프와-시간-가중치)는 고정값이며 실제 운행시간과의 차이는 [현재 한계](../README.md#현재-한계)에 설명했습니다. |
 | 경로 복원 범위 | 상위 `topN`만 | 모든 후보 | 정렬에 필요한 시간 점수를 먼저 비교하고 상위 후보의 경로만 복원합니다. 전체 후보의 경로·좌표 생성을 줄이는 대신, 더 많은 후보를 표시하려면 `topN`을 늘려야 합니다. |
 | 역 단위 | 이름 기반 `stationKey` | OSM 노드 id | 노선별 노드를 사용자에게 하나의 역으로 표시하려면 묶음 키가 필요합니다. 동명이역(신촌·양평)은 `transferName`으로 직접 분리하며, 잘못 묶인 역은 800m 거리 검사와 데이터 테스트로 확인합니다. |
 | 기능 간 결합 | `App`에서 조립, ESLint import 경계 | 기능끼리 직접 import | planner와 map의 직접 의존을 제한해 지도 SDK 없이 계산과 상태를 테스트합니다. 두 기능을 연결하는 `markers`·`routes` 변환은 `App.tsx`가 맡습니다. |
@@ -179,7 +182,7 @@ flowchart TD
 | 변경 | 수정 위치 | 함께 확인할 테스트·문서 | 바뀌지 않는 곳 |
 | --- | --- | --- | --- |
 | 노선 추가 | [fetch-stations.mjs](../scripts/fetch-stations.mjs)의 노선 목록·키 분리 표 → `npm run data:stations` → [lines.ts](../src/data/subway/lines.ts)에 id·색·배지 | [stations.test.ts](../src/data/subway/stations.test.ts)의 종점·환승 묶음·새 노선 연결 항목, README의 노선 수와 역 수, [검증 기록](VALIDATION.md) 데이터 표 | `domain/*`, reducer, URL 규칙, 지도 |
-| 환승 비용 변경 | [graph.ts](../src/domain/subway/graph.ts)의 `TRANSFER_MINUTES` 한 곳 | [graph.test](../src/domain/subway/graph.test.ts)·[midpoint.test](../src/domain/subway/midpoint.test.ts)의 환승 비용 검증, 실제 데이터의 기대 역, README·개발 가이드의 "환승 5분" 표기 확인 | 다익스트라, 정렬, 화면 |
+| 환승 비용 변경 | [graph.ts](../src/domain/subway/graph.ts)의 `TRANSFER_MINUTES` 한 곳 | [graph.test](../src/domain/subway/graph.test.ts)·[midpoint.test](../src/domain/subway/midpoint.test.ts)의 환승 비용 검증, 실제 데이터의 기대 역, [시간 가중치 표](DEVELOPMENT.md#그래프와-시간-가중치) | 다익스트라, 정렬, 화면 |
 | 공용 승강장 환승 비용 0 | `buildSubwayGraph`의 환승 간선 생성부에 노선 쌍별 예외 | 새 그래프 테스트, [시간 가중치 표](DEVELOPMENT.md#그래프와-시간-가중치), `countTransfers`가 노선 변경을 여전히 환승으로 셀지 결정 | 카탈로그, URL |
 | 정렬 규칙 변경(예: 합계 우선) | [midpoint.ts](../src/domain/subway/midpoint.ts)의 `scored.sort` 비교 함수 | `calculateMidpoint (ranking rule)` 테스트의 기대 순서, README "추천 기준", e2e의 기대 역명이 있으면 함께 | 그래프, 다익스트라, URL |
 | 출발지 최대 수 변경 | [plannerReducer.ts](../src/features/planner/model/plannerReducer.ts)의 `MAX_DEPARTURES`(색이 반복되지 않게 하려면 `DEPARTURE_COLORS`도) | reducer·urlState 테스트, 패널 레이아웃 확인 | 도메인 전체 |
@@ -203,7 +206,7 @@ flowchart TD
 
 지하철 안내 사인의 잉크 네이비와 시그널 오렌지를 기본으로 삼았습니다. 출발지의 점·선과 결과 역명판으로 입력과 결과를 구분하고, 노선 배지에는 실제 노선별 색을 사용합니다.
 
-색·간격·모서리·터치 크기를 [토큰](../src/app/styles/tokens.css)으로 관리하고 컴포넌트 스타일은 CSS Modules로 나눴습니다. 데스크톱은 지도 위 패널, 모바일은 접고 펼치는 하단 패널을 사용합니다.
+데스크톱은 지도 위 패널, 모바일은 접고 펼치는 하단 패널을 사용합니다. 공통 스타일의 관리 방식은 [설계 트레이드오프](#설계-트레이드오프)의 스타일 항목에 있습니다.
 
 ## 다음 단계
 
