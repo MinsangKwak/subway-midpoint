@@ -6,11 +6,11 @@
 
 [서비스 열기](https://minsangkwak.github.io/subway-midpoint/) · [개발 미리보기](https://minsangkwak.github.io/subway-midpoint/dev/) · [노션 포트폴리오](https://www.notion.so/3e7cbbdd109b81d59d04d5f472db58cb) · [문서 모음](docs/README.md)
 
-## 먼저 봐주셨으면 하는 경험
+## 핵심 구현과 설계
 
-금융 서비스 UI 실무에서 다뤄 온 화면·상태 관리 경험을 바탕으로, 이 프로젝트에서는 **모호한 요구를 데이터와 알고리즘으로 구체화하는 과정**에 집중했습니다. 기획, 데이터 설계, 프론트엔드, UI·접근성, 검증·배포를 직접 맡았습니다.
+추천 기준, 역·환승 데이터, 계산, 화면 상태를 연결하고 키보드 접근성과 검증·배포를 함께 구성했습니다.
 
-| 확인할 역량 | 해결한 문제 | 구현 근거 |
+| 구현 영역 | 해결한 문제 | 관련 코드·문서 |
 | --- | --- | --- |
 | 문제 정의 | 지도 가운데가 아닌 최대 예상 이동시간을 기준으로 추천 | [계산 기준과 설계 판단](docs/PROJECT.md) |
 | 데이터 모델링 | 분기 노선의 잘못된 연결과 신촌·양평 동명이역의 오결합 방지 | [그래프](src/domain/subway/graph.ts) · [데이터 테스트](src/data/subway/stations.test.ts) |
@@ -18,7 +18,7 @@
 | 프론트엔드 상태 설계 | 입력 변경 시 결과 무효화, 공유 URL로 입력·후보 복원 | [reducer](src/features/planner/model/plannerReducer.ts) · [URL 상태](src/features/planner/model/urlState.ts) |
 | UI 품질과 운영 | 키보드·한글 입력 대응, 지도 실패 시 계산 유지, 브라우저 회귀 검사 | [검색 입력](src/features/planner/ui/DepartureField.tsx) · [검증 기록](docs/VALIDATION.md) |
 
-**추천하는 읽기 순서:** 이 README에서 서비스와 기여 범위를 확인한 뒤 [프로젝트 설명](docs/PROJECT.md)에서 판단 과정을, [검증 기록](docs/VALIDATION.md)에서 근거와 한계를 확인해 주세요.
+**문서 안내:** 기능과 구현 범위는 이 README에서, 설계 판단은 [프로젝트 설명](docs/PROJECT.md)에서, 실행 결과와 확인 범위는 [검증 기록](docs/VALIDATION.md)에서 확인할 수 있습니다.
 
 ## 현재 구현 범위
 
@@ -124,7 +124,7 @@ npm run test:e2e
 | 2026-02 | [초기 React 앱과 Kakao 지도 연동](https://github.com/MinsangKwak/subway-midpoint/commit/bd44c9e) | 지도 SDK 로딩과 React 렌더링 순서가 꼬이면 마커가 사라졌다. 로더를 분리하고 상태를 나누는 계기 |
 | 2026-09 | [앱 구조·디자인·도구·배포 재구축](https://github.com/MinsangKwak/subway-midpoint/commit/ccc30ce) | 계산을 `domain`으로 분리하고 ESLint import 경계를 두어 지도 없이도 테스트할 수 있게 함 |
 | 2026-09 | [OSM 기반 1~9호선 데이터 생성](https://github.com/MinsangKwak/subway-midpoint/commit/e9a5985) | 역 배열 순서로 연결하던 방식이 1호선 분기에서 틀렸다. 운행 구간(`LINE_SEGMENTS`)을 도입하고 구로 경유 회귀 테스트를 추가 |
-| 2026-10 | [문서를 docs로 통합](https://github.com/MinsangKwak/subway-midpoint/commit/88baf09), [구직용 문서 개편](https://github.com/MinsangKwak/subway-midpoint/commit/ab01738) | 측정하지 않은 성과는 적지 않고, 확인한 범위와 확인하지 못한 범위를 구분해 기록 |
+| 2026-10 | [문서를 docs로 통합](https://github.com/MinsangKwak/subway-midpoint/commit/88baf09), [프로젝트 문서 개편](https://github.com/MinsangKwak/subway-midpoint/commit/ab01738) | 문서별 역할을 나누고 검증 기록에 실행 조건과 확인 범위를 정리 |
 | 2026-10 | [환승 별칭 역 표시 오류 수정과 상위 후보만 경로 복원](https://github.com/MinsangKwak/subway-midpoint/commit/538fe98) | 이수역이 후보가 되면 "총신대입구 4호선"으로 보였다. 이름 대신 역 키로 통일하고, 기존 로컬 측정에서 6인 계산 17.8ms → 2.3ms 기록(데이터 범위가 다른 비교; 검증 문서 참고) |
 | 2026-10 | [신분당·경의중앙·수인분당·공항철도 추가](https://github.com/MinsangKwak/subway-midpoint/commit/9c5fd54) | 같은 이름의 다른 역(신촌·양평)이 환승역으로 묶이는 문제를 거리 검사로 잡아 분리 |
 | 2026-10 | [URL 상태 복원과 공유 주소](https://github.com/MinsangKwak/subway-midpoint/commit/cd12cc4), [Playwright 테스트를 CI에 추가](https://github.com/MinsangKwak/subway-midpoint/commit/5af4a34) | 수동으로 확인하던 브라우저 흐름을 자동 검사로 옮김 |
