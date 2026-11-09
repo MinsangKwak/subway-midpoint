@@ -6,7 +6,7 @@
 
 ## 코드 검토 시작점
 
-| 관심 있는 역량 | 먼저 읽을 파일 | 이어서 볼 파일 |
+| 검토할 영역 | 먼저 읽을 파일 | 이어서 볼 파일 |
 | --- | --- | --- |
 | 문제를 계산으로 구현 | [midpoint.ts](../src/domain/subway/midpoint.ts) | [midpoint.test.ts](../src/domain/subway/midpoint.test.ts) |
 | 데이터 품질 관리 | [stations.test.ts](../src/data/subway/stations.test.ts) | [fetch-stations.mjs](../scripts/fetch-stations.mjs) |
